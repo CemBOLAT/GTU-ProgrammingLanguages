@@ -1,0 +1,24 @@
+;; Product Rules:
+;; <line> ::= <if-statement> | <for-loop> | <while-loop> | <variable-assignment> | <fuction-defination> | <fuction-declaration> | <return-statement> | <variable-re-assignment> | <end-block> | <empty-line>
+;; <if-statement> ::= if <space> ( <space> <logical-expression> <space> ) <space> { <line>* }
+;; <for-loop> ::= for <space> ( <space> <variable-assignment> <space> ; <space> <logical-expression> <space> ; <space> <arithmetic-expr> <space> ) <space> { <line>* }
+;; <while-loop> ::= while <space> ( <space> <logical-expression> <space> ) <space> { <line>* }
+;; <variable-assignment> ::= <data-type> <space> <param-name> <space> = <space> <arithmetic-expr> <space> ; | <data-type> <space> <param-name> <space> = <space> <func-name> <space> (<function-call-params>) <space> ;
+;; <fuction-defination> ::= <data-type> <space> <func-name> <space> (<function-decleration-params>) <space> { <line>* }
+;; <fuction-declaration> ::= <data-type> <space> <func-name> <space> (<function-decleration-params>) <space> ;
+;; <return-statement> ::= return <space> <arithmetical-expr> <space> ;
+;; <variable-re-assignment> ::= <param-name> <space> = <space> <arithmetic-expr> <space> ;
+;; <end-block> ::= }
+;; <empty-line> ::= <space> | <new-line> | <tab>
+;; <logical-expression> ::= <literal> <space> <logical-operator> <space> <literal> | <literal> <space> <logical-operator> <space> <logical-expression>
+;; <logical-operator> ::= && | || | !
+;; <literal> ::= <param-name> | <number>
+;; <arithmetic-expr> ::= <term> <space> <+> <space> <term> | <term> <space> <-> <space> <term> | <term>
+;; <term> ::= <factor> <space> <*> <space> <factor> | <factor> <space> / <space> <factor> | <factor>
+;; <factor> ::= <number> | <param-name> | <space> ( <space> <arithmetic-expr> <space> )
+;; <function-decleration-params> ::= <data-type> <space> <param-name> | <data-type> <space> <param-name> , <space> <function-decleration-params>
+;; <function-call-params> ::= <param-name> | <param-name> , <space> <function-call-params>
+;; <data-type> ::= int | float | double | char | void
+;; <param-name> ::= <letter> | <letter> <param-name> | <letter> <number> | <letter> <number> <param-name>
+;; <func-name> ::= <letter> | <letter> <func-name> | <letter> <number> | <letter> <number> <func-name>
+;; <number> ::= <digit> | <digit> <number>

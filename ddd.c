@@ -28,5 +28,4 @@ int main () {
     for (int a = 2 ; a < 10 ; a + 1) {
         cemal = 2 ;
     }
-    return 0 ;
 }
