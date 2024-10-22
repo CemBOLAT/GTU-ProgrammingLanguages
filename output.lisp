@@ -6,3 +6,9 @@
 (setq cemal 2)
 (setq cemal (+ 23 (+ 10 (* 2 24))))
 (setq cemal (+ 23 (* (+ 2 10) 24)))
+(+ 4 (+ 2 23))
+nil
+(* 4 (% 2 23))
+(setq cemal (+ 23 (* (+ 2 10) 24)))
+
+NIL

@@ -214,7 +214,7 @@
                 (let ((func-name (subseq arithmetic-expr 0 (- (length arithmetic-expr) 3))))
                     (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) "))")
                 )
-                (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression (split-string " " arithmetic-expr 0 '() "" nil) '() '() 0) ")")
+                (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression (split-string " " (add-space-before-after-delimeters arithmetic-expr 0) 0 '() "" nil) '() '() 0) ")")
             )
         )
     )
@@ -226,17 +226,57 @@
 )
 
 (defun convert-fuction-declaration (line)
-    (format nil "~a~%" line)
+    (let*
+        ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
+        (data-type (subseq trimmed-line 0 (position #\space trimmed-line)))
+        )
+        (format t "data-type :~a: trimmed-line :~a:~%" data-type trimmed-line)
+    )    
+)
 
+(defun add-space-before-after-delimeters (line index)
+    (if (>= index (length line))
+        ""
+        (let ((current-char (subseq line index (+ index 1))))
+            (if (or (string= current-char "(") (string= current-char ")") (string= current-char "+") (string= current-char "-") (string= current-char "*") (string= current-char "/"))
+                (concatenate 'string " " current-char " " (add-space-before-after-delimeters line (+ index 1)))
+                (concatenate 'string current-char (add-space-before-after-delimeters line (+ index 1)))
+            )
+        )
+    )
 )
 
 (defun convert-return-statement (line)
-    (format nil "~a~%" line)
-
+    (let* ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
+            (return-value (subseq trimmed-line 6 (- (length trimmed-line) 1)))
+            (splitted-line (split-string " " (add-space-before-after-delimeters return-value 0) 0 '() "" nil)))
+        (if splitted-line
+            (concatenate 'string (evaluate-infix-arithmetic-expression splitted-line '() '() 0))
+            "nil"
+        )
+    
+    )
 )
 
 (defun convert-variable-re-assignment (line)
-    (format nil "~a~%" line)
+    (let* ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
+                (param-name (subseq trimmed-line 0 (position #\= trimmed-line)))
+                (arithmetic-expr (subseq trimmed-line (+ 1 (position #\= trimmed-line)) (- (length trimmed-line) 1))))
+            (if (search "," arithmetic-expr)
+                    ;; funcName(param1, param2, param3) -->
+                    (let* ((string-no-space (remove-whitespace arithmetic-expr))
+                            (func-name (subseq string-no-space 0 (position #\( string-no-space)))
+                            (func-params (subseq string-no-space (+ 1 (position #\( string-no-space)) (- (length string-no-space) 1))))
+                            (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) " " (evaluate-function-call (split-string "," func-params 0 '() "" nil) 0) "))")
+                    )
+                (if (search "()" arithmetic-expr)
+                    (let ((func-name (subseq arithmetic-expr 0 (- (length arithmetic-expr) 3))))
+                        (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) "))")
+                    )
+                    (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression (split-string " " (add-space-before-after-delimeters arithmetic-expr 0) 0 '() "" nil) '() '() 0) ")")
+                )
+            )
+        )
 )
 
 (defun convert-end-block (line)
