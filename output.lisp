@@ -1,14 +1,30 @@
-(setq cemal (+ 2 (+ 2 (* 2 2))))
-(setq cemal (func 2 4 5))
-(setq cemal (func))
-(setq cemal (fun))
-(setq cemal (func))
-(setq cemal 2)
-(setq cemal (+ 23 (+ 10 (* 2 24))))
-(setq cemal (+ 23 (* (+ 2 10) 24)))
-(+ 4 (+ 2 23))
-nil
-(* 4 (% 2 23))
-(setq cemal (+ 23 (* (+ 2 10) 24)))
+(declaim (ftype (function (integer integer) integer) sum))
 
-NIL
+(defun sum (a b) 
+(progn
+(+ a b)
+))
+
+(defun main () 
+(progn
+(setq x 10)
+(setq y 20)
+(setq result (sum x y))
+
+(if (> result 25) 
+(progn
+(format t "Result is greater than 25~%")
+(setq x 5)
+))
+
+(loop for i from 0 below 10 by 1 do
+(progn
+(format t "~a~%" i)
+))
+(format t "----------------~%")
+(loop for i from 0 to 10 by 1 do
+(progn
+(format t "~a~%" i)
+))
+0
+))

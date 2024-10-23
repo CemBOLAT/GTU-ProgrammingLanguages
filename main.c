@@ -1,14 +1,25 @@
-    int cemal = 2 + 2 + 2 * 2 ;
-    int         cemal      =          func                (2, 4,      5);
-    int cemal = func() ;
-    int cemal = func();
-    int cemal = func () ;
-    int cemal = 2 ;
-    int cemal = 23 + 10 + 2 * 24 ;
-    int cemal = 23+(10+ 2 ) * 24 ;
-    return 4 + (23 + 2);
-    return ;
-    return 4      * (23 % 2     )  ;
-    cemal = 23 + ( 10 + 2 ) * 24 ;
+int sum(int a, int b);
 
-    int main();
+int sum(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    int result = sum(x, y);
+    
+    if (result > 25) {
+        printf("Result is greater than 25\n");
+        x = 5;
+    }
+
+    for (int i = 0; i < 10; i++) {
+        printf("%d\n", i);
+    }
+    printf("----------------\n");
+    for (int i = 0; i <= 10; i++) {
+        printf("%d\n", i);
+    }
+    return 0;
+}
