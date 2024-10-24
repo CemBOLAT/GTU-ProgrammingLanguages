@@ -1,5 +1,4 @@
 (declaim (ftype (function (integer integer) integer) sum))
-
 (defun sum (a b) 
 (progn
 (+ a b)

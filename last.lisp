@@ -61,21 +61,35 @@
              str)
 )
 
-(defun read-file-helper (stream lines)
-    ;; reads the given file and returns the lines as a list
+(defun read-file-helper (stream index line-index)
+    ;; reads the given file and returns the lines as a string
     (let ((line (read-line stream nil)))
         (if line
-            (read-file-helper stream (cons line lines))
-            (reverse lines)
+            (if (= index line-index)
+                line
+                (read-file-helper stream (+ index 1) line-index)
+            )
+            nil
         )
     )
 )
 
-(defun read-file (fileName)
+(defun read-file (fileName index)
     ;; reads the given file and returns the lines as a list
     ;; :direction the type of the stream, :input for reading, :output for writing
     (with-open-file (stream fileName :direction :input)
-        (read-file-helper stream '())
+        (read-file-helper stream 0 index)
+    )
+)
+
+(defun write-file-helper (stream lines)
+    ;; writes the given lines to a file
+    (if lines
+        (progn
+            (format stream "~a~%" (car lines))
+            (write-file-helper stream (cdr lines))
+        )
+        nil
     )
 )
 
@@ -84,9 +98,7 @@
     ;; :direction the type of the stream, :input for reading, :output for writing
     ;; if-exists :supersede to overwrite, :append to append
     (with-open-file (stream "output.lisp" :direction :output :if-exists :supersede)
-        (loop for line in lines do
-            (format stream "~a~%" line)
-        )
+        (write-file-helper stream lines)
     )
 )
 
@@ -375,11 +387,6 @@
     )
 )
 
-(format t "evaluate-infix-logical-expression:~a:~%" (evaluate-infix-logical-expression (reverse '("result" ">" "25")) '() '() 0))
-(format t "evaluate-infix-logical-expression:~a:~%" (evaluate-infix-arithmetic-expression (reverse '("4" "+" "3")) '() '() 0))
-
-
-
 ;dont forget öncelik.
 ;;(defun evaluate-infix-logical-expression (infix operator-stack output-queue index)
 ;;    ;; first index check
@@ -533,6 +540,8 @@
                     (let* ((splitted-parameters (split-string "," (remove-whitespace parameters) 0 '() "" nil)))
                         (concatenate 'string "(defun " (string-trim " " func-name) " (" (string-trim " " (defition-func-parameters splitted-parameters)) ") " '(#\Newline) "(progn")
                     )))))
+
+
 
 (defun c-to-lisp-data-type (data-type)
     ;; converts a string c-type data type to lisp-type data type
@@ -728,14 +737,17 @@
             ((and (search "=" line-without-space) "variable-re-assignment")) ;; if the line has a '=' sign
         )))
 
-(defun main (lines index converted-lines)
-    ;; main function that converts the given lines to lisp
-    (if (< index (length lines))
-        (let* ((line (line-by-index lines index))
-                (type-of-line (line-type line))
-                (conversion-func (conversion-foo type-of-line))
-                (converted-line (funcall conversion-func line)))
-            (main lines (+ index 1) (append converted-lines (list converted-line))))
-        converted-lines))
+(defun main (converted-lines index)
+    (let* ((next-line (read-file "main.c" index)))
+        (if (null next-line)
+            (write-file (reverse converted-lines))
+            (let* ((type-of-line (line-type next-line))
+                    (conversion-func (conversion-foo type-of-line))
+                    (converted-line (funcall conversion-func next-line)))
+                (main (cons converted-line converted-lines) (+ index 1))
+            )
+        )
+    )
+)
 
-(write-file (main (read-file "main.c") 0 '())) ;; writes the converted lines to a file
+(main '() 0)
