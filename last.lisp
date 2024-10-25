@@ -387,57 +387,6 @@
     )
 )
 
-;dont forget öncelik.
-;;(defun evaluate-infix-logical-expression (infix operator-stack output-queue index)
-;;    ;; first index check
-;;    ;;  index is greater or equal start evaluating the expression from stack and add the result to the output queue
-;;    ;;  else: check the current char and push it to the stack or the output queue
-;;    ;;  if the current char is a paranthesis then pop the stack until the last paranthesis and add the result to the output queue
-;;    (if (>= index (length infix))
-;;        (let* ((op (pop operator-stack)) (operand1 (pop output-queue)) (operand2 (pop output-queue)))
-;;            (if (null op)
-;;                (progn
-;;                    (push (concatenate 'string operand1) output-queue)
-;;                    (list-to-string output-queue 0 "")
-;;                )
-;;                (progn
-;;                    (push (concatenate 'string "(" op " " operand2 " " operand1 ")") output-queue)
-;;                    (if (null operator-stack)
-;;                        (list-to-string output-queue 0 "")
-;;                        (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1))
-;;                    )
-;;                )
-;;            )
-;;        )
-;;        (let ((current-char (nth index infix)))
-;;            (cond
-;;                ; push and keyword as a string
-;;                ((string= current-char "&&") (push "and" operator-stack))
-;;                ((string= current-char "||") (push "or" operator-stack))
-;;                ((string= current-char "!") (push "not" operator-stack))
-;;                ((string= current-char "<") (push current-char operator-stack))
-;;                ((string= current-char ">") (push current-char operator-stack))
-;;                ((string= current-char "<=") (push current-char operator-stack))
-;;                ((string= current-char ">=") (push current-char operator-stack))
-;;                ((string= current-char "==") (push "eq" operator-stack))
-;;                ((string= current-char "!=") (push "/=" operator-stack))
-;;                ((string= current-char "(") (push current-char operator-stack))
-;;                ((string= current-char ")") (loop for i from 0 to (- (length operator-stack) 1) do
-;;                                                (let ((operator (pop operator-stack)))
-;;                                                    (if (string= operator "(")
-;;                                                        (return)
-;;                                                        (push (concatenate 'string "(" operator " " (pop output-queue) " " (pop output-queue) ")") output-queue)
-;;                                                    )
-;;                                                    (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1)))
-;;                                            )                                                
-;;                )
-;;                (t (push current-char output-queue))
-;;            )
-;;            (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1))
-;;        )
-;;    )
-;;)
-
 (defun convert-variable-re-assignment (line)
     ;; line example: "a = 5;"
     ;; first remove unnecessary whitespaces
@@ -454,8 +403,8 @@
                     (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) "))")
                 )
                 (if (or (search "(" arithmetic-expr) (search "," arithmetic-expr))
-                    (let* ((func-name (subseq arithmetic-expr 0 (position #\( arithmetic-expr)))
-                            (func-params (subseq arithmetic-expr (+ 1 (position #\( arithmetic-expr)) (- (length arithmetic-expr) 1))))
+                    (let* ((func-name (subseq arithmetic-expr 0 (position (code-char 40) arithmetic-expr)))
+                            (func-params (subseq arithmetic-expr (+ 1 (position (code-char 40) arithmetic-expr)) (- (length arithmetic-expr) 1))))
                             (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) " " 
                                         (list-to-string (split-string "," func-params 0 '() "" nil) 0 " ") "))")
                     )
@@ -486,8 +435,8 @@
                     (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) "))")
                 )
                 (if (or (search "(" arithmetic-expr) (search "," arithmetic-expr))
-                    (let* ((func-name (subseq arithmetic-expr 0 (position #\( arithmetic-expr)))
-                            (func-params (subseq arithmetic-expr (+ 1 (position #\( arithmetic-expr)) (- (length arithmetic-expr) 1))))
+                    (let* ((func-name (subseq arithmetic-expr 0 (position (code-char 40) arithmetic-expr)))
+                            (func-params (subseq arithmetic-expr (+ 1 (position (code-char 40) arithmetic-expr)) (- (length arithmetic-expr) 1))))
                             (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) " " 
                                         (list-to-string (split-string "," func-params 0 '() "" nil) 0 " ") "))")
                     )
@@ -530,8 +479,8 @@
     (let* ((temp-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
             (trimmed-line (string-trim " " (subseq temp-line 0 (- (length temp-line) 1))))
             (func-return-type (subseq trimmed-line 0 (position #\space trimmed-line)))
-            (func-name (subseq trimmed-line (+ 1 (position #\space trimmed-line)) (position #\( trimmed-line)))
-            (parameters (subseq trimmed-line (+ 1 (position #\( trimmed-line)) (- (length trimmed-line) 1)))
+            (func-name (subseq trimmed-line (+ 1 (position #\space trimmed-line)) (position (code-char 40) trimmed-line)))
+            (parameters (subseq trimmed-line (+ 1 (position (code-char 40) trimmed-line)) (- (length trimmed-line) 1)))
         )
             (cond 
                 ((or (string= parameters "") (string= parameters " ")) 
@@ -578,8 +527,8 @@
         ((temp-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
         (trimmed-line (string-trim " " (subseq temp-line 0 (- (length temp-line) 1))))
         (data-type (subseq trimmed-line 0 (position #\space trimmed-line)))
-        (func-name (subseq trimmed-line (+ 1 (position #\space trimmed-line)) (position #\( trimmed-line)))
-        (parameters (subseq trimmed-line (+ 1 (position #\( trimmed-line)) (- (length trimmed-line) 1))))
+        (func-name (subseq trimmed-line (+ 1 (position #\space trimmed-line)) (position (code-char 40) trimmed-line)))
+        (parameters (subseq trimmed-line (+ 1 (position (code-char 40) trimmed-line)) (- (length trimmed-line) 1))))
         (cond
             ((or (string= parameters "") (string= parameters " ")) 
                 (concatenate 'string "(declaim (ftype (function () " (c-to-lisp-data-type data-type) ") " (string-trim " " func-name) "))"))
