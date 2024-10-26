@@ -1,29 +1,32 @@
 (declaim (ftype (function (integer integer) integer) sum))
 (defun sum (a b) 
-(progn
-(+ a b)
+(let* (
+    
+)
+    (+ a b)
 ))
 
 (defun main () 
+(let* (
+    (x 10)
+    (y 20)
+    (result (sum x y))
+)
+    
+    (if (> result 25) 
 (progn
-(setq x 10)
-(setq y 20)
-(setq result (sum x y))
+        (format t "Result is greater than 25~%")
+        (setq x 5)
+    ))
 
-(if (> result 25) 
+    (loop for i from 0 below 10 by 1 do
 (progn
-(format t "Result is greater than 25~%")
-(setq x 5)
-))
-
-(loop for i from 0 below 10 by 1 do
+        (format t "~a~%" i)
+    ))
+    (format t "----------------~%")
+    (loop for i from 0 to 10 by 1 do
 (progn
-(format t "~a~%" i)
-))
-(format t "----------------~%")
-(loop for i from 0 to 10 by 1 do
-(progn
-(format t "~a~%" i)
-))
-0
+        (format t "~a~%" i)
+    ))
+    0
 ))

@@ -432,15 +432,15 @@
             (arithmetic-expr (remove-whitespace (subseq line-without-data-type (+ 1 (position #\= line-without-data-type)) (- (length line-without-data-type) 1)))))
             (if (search "()" arithmetic-expr)
                 (let ((func-name (subseq arithmetic-expr 0 (- (length arithmetic-expr) 2))))
-                    (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) "))")
+                    (concatenate 'string "(" (string-trim " " param-name) " (" (string-trim " " func-name) "))")
                 )
                 (if (or (search "(" arithmetic-expr) (search "," arithmetic-expr))
                     (let* ((func-name (subseq arithmetic-expr 0 (position (code-char 40) arithmetic-expr)))
                             (func-params (subseq arithmetic-expr (+ 1 (position (code-char 40) arithmetic-expr)) (- (length arithmetic-expr) 1))))
-                            (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) " " 
+                            (concatenate 'string "(" (string-trim " " param-name) " (" (string-trim " " func-name) " " 
                                         (list-to-string (split-string "," func-params 0 '() "" nil) 0 " ") "))")
                     )
-                    (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression 
+                    (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression 
                             (reverse (split-string " " (add-space-before-after-delimeters arithmetic-expr 0) 0 '() "" nil)) '() '() 0) ")")
                 
                 )
@@ -484,10 +484,10 @@
         )
             (cond 
                 ((or (string= parameters "") (string= parameters " ")) 
-                    (concatenate 'string "(defun " (string-trim " " func-name) " () " '(#\Newline) "(progn"))
+                    (concatenate 'string "(defun " (string-trim " " func-name) " () " '(#\Newline) "(let* ("))
                 (t
                     (let* ((splitted-parameters (split-string "," (remove-whitespace parameters) 0 '() "" nil)))
-                        (concatenate 'string "(defun " (string-trim " " func-name) " (" (string-trim " " (defition-func-parameters splitted-parameters)) ") " '(#\Newline) "(progn")
+                        (concatenate 'string "(defun " (string-trim " " func-name) " (" (string-trim " " (defition-func-parameters splitted-parameters)) ") " '(#\Newline) "(let* (")
                     )))))
 
 
@@ -686,16 +686,58 @@
             ((and (search "=" line-without-space) "variable-re-assignment")) ;; if the line has a '=' sign
         )))
 
-(defun main (converted-lines index)
-    (let* ((next-line (read-file "main.c" index)))
-        (if (null next-line)
-            (write-file (reverse converted-lines))
-            (let* ((type-of-line (line-type next-line))
-                    (conversion-func (conversion-foo type-of-line))
-                    (converted-line (funcall conversion-func next-line)))
-                (main (cons converted-line converted-lines) (+ index 1))
+
+(defun add_till_space (line original_line index)
+    ;; add till first character that is not a space
+    (if (>= index (length original_line))
+        ""
+        (let* ((current-char (subseq original_line index (+ index 1))))
+            (if (string= current-char " ")
+                (concatenate 'string current-char (add_till_space line original_line (+ index 1)))
+                line
             )
         )
+    )
+)
+    
+
+(defun main (converted-lines index)
+    (let* ((next-line (read-file "main.c" index))
+            (line-before (read-file "main.c" (- index 1))))
+        (cond 
+            ((null next-line) (write-file (reverse converted-lines)))
+            ((null line-before) (progn
+                                    (let* ((type-of-line (line-type next-line))
+                                            (conversion-func (conversion-foo type-of-line))
+                                            (converted-line (add_till_space (funcall conversion-func next-line) next-line 0)))
+                                        (main (cons converted-line converted-lines) (+ index 1)))))
+            (t
+                (let* ((type-of-line (line-type next-line))
+                        (type-of-line-before (line-type line-before)))
+                        (if (or (and (string= type-of-line-before "variable-assignment") (not (string= type-of-line "variable-assignment")))
+                                (and (string= type-of-line-before "fuction-definition") (not (string= type-of-line "variable-assignment"))))
+                            ; kapalı parantez ekle converted-line listesine
+                            (let* ((converted-once (cons (code-char 41) converted-lines))
+                                    (conversion-func (conversion-foo type-of-line))
+                                    (converted-line (add_till_space (funcall conversion-func next-line) next-line 0)))
+                                (main (cons converted-line converted-once) (+ index 1))   
+                            )
+                            (let* ((conversion-func (conversion-foo type-of-line))
+                                    (converted-line (add_till_space (funcall conversion-func next-line) next-line 0)))
+                                (main (cons converted-line converted-lines) (+ index 1)))
+                        )
+                )
+            )
+            
+        )
+        ;;(if (null next-line)
+        ;;    (write-file (reverse converted-lines))
+        ;;    (let* ((type-of-line (line-type next-line))
+        ;;            (conversion-func (conversion-foo type-of-line))
+        ;;            (converted-line (funcall conversion-func next-line)))
+        ;;        (main (cons converted-line converted-lines) (+ index 1))
+        ;;    )
+        ;;)
     )
 )
 
