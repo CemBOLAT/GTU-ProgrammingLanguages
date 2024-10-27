@@ -87,7 +87,7 @@
     (let* ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " ")) ;; '(#\Newline) "(progn"
             (logical-expression (subseq trimmed-line 3 (- (length trimmed-line) 1)))
             (splitted-logical-expression (split-string " " (add-space-before-after-logical-delimiters logical-expression 0) 0 '() "" nil)))
-        (concatenate 'string "(if " (evaluate-infix-logical-expression (reverse splitted-logical-expression) '() '() 0) '(#\Newline) (add-till-space "(progn" line 0))
+        (concatenate 'string "(if " (evaluate-infix-expression (reverse splitted-logical-expression) '() '() 0) '(#\Newline) (add-till-space "(progn" line 0))
     )
 )
 
@@ -100,7 +100,7 @@
     (let* ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " "))
             (logical-expression (subseq trimmed-line 6 (- (length trimmed-line) 1)))
             (splitted-logical-expression (split-string " " (add-space-before-after-logical-delimiters logical-expression 0) 0 '() "" nil)))
-        (concatenate 'string "(loop while " (evaluate-infix-logical-expression (reverse splitted-logical-expression) '() '() 0) " do" '(#\Newline) (add-till-space "(progn" line 0))
+        (concatenate 'string "(loop while " (evaluate-infix-expression (reverse splitted-logical-expression) '() '() 0) " do" '(#\Newline) (add-till-space "(progn" line 0))
     )
 )
 
@@ -238,106 +238,84 @@
     )
 )
 
-(defun evaluate-infix-arithmetic-expression (infix operator-stack output-queue index)
-    (if (>= index (length infix))
-        (let* ((op (pop operator-stack)) 
-                    (operand1 (pop output-queue)) (operand2 (pop output-queue)))
-            (if (null op)
-                (progn
-                    (push (concatenate 'string operand1) output-queue)
-                    (list-to-string output-queue 0 "")
-                )
-                (progn
-                    (push (concatenate 'string "(" op " " operand1 " " operand2 ")") output-queue)
-                    (if (null operator-stack)
-                        (list-to-string output-queue 0 "")
-                        (evaluate-infix-arithmetic-expression infix operator-stack output-queue (+ index 1))
-                    )
-                )
-            )
-        )
-        (let* ((current-char (nth index infix)))
-            (cond
-                ((string= current-char ")") (push current-char operator-stack))
-                ((string= current-char "(") (loop for i from 0 to (- (length operator-stack) 1) do
-                                                (let ((operator (pop operator-stack)))
-                                                    (if (string= operator ")")
-                                                        (return)
-                                                        (let* ((operand1 (pop output-queue)) (operand2 (pop output-queue)))
-                                                            (push (concatenate 'string "(" operator " " operand1 " " operand2 ")") output-queue)
-                                                        )
-                                                    )
-                                                    (evaluate-infix-arithmetic-expression infix operator-stack output-queue (+ index 1))
-                                                )
-                                            ))
-                ((is-operator current-char) (if (null operator-stack)
-                                                (push current-char operator-stack)
-                                                (let ((top-operator (car operator-stack)))
-                                                    (if (or (null top-operator) (string= top-operator "(") (>= (precedence current-char) (precedence top-operator)))
-                                                        (push current-char operator-stack)
-                                                        (let* ((op (pop operator-stack)) 
-                                                                (operand1 (pop output-queue)) (operand2 (pop output-queue)))
-                                                            (push (concatenate 'string "(" op " " operand1 " " operand2 ")") output-queue)
-                                                            (push current-char operator-stack)
-                                                        )
-                                                    )
-                                                )
-                                            ))
-                (t (push current-char output-queue))
-            )
-            (evaluate-infix-arithmetic-expression infix operator-stack output-queue (+ index 1))
+(defun functional-push (item list)
+    ;; pushes the given item to the list
+    (cons item list)
+)
+
+(defun functional-pop (list)
+    ;; pops the first element from the list
+    ;; returns 2 values, the first element and the remaining list
+    (values (car list) (cdr list))
+)
+
+(defun evaluate-expression-helper (operator output-queue)
+    ;; Concatenates the operator and two operands from the queue, and returns the new queue.
+    (multiple-value-bind (operand1 new-output-queue) (functional-pop output-queue)
+        (multiple-value-bind (operand2 final-output-queue) (functional-pop new-output-queue)
+            (values (cons (concatenate 'string "(" (logical-operator-to-lisp operator) " " operand1 " " operand2 ")") final-output-queue))
         )
     )
 )
 
-(defun evaluate-infix-logical-expression (infix operator-stack output-queue index)
-    (if (>= index (length infix))
-        (let* ((op (pop operator-stack)) 
-                    (operand1 (pop output-queue)) (operand2 (pop output-queue)))
-            (if (null op)
-                (progn
-                    (push (concatenate 'string operand1) output-queue)
-                    (list-to-string output-queue 0 "")
+(defun handle-parentheses (operator-stack output-queue)
+    ;; Processes the stack until a closing parenthesis or operator is found.
+    (if (null operator-stack)
+        (values nil output-queue)
+        (multiple-value-bind (operator new-operator-stack) (functional-pop operator-stack)
+            (if (string= operator ")")
+                (values new-operator-stack output-queue)
+                (let ((new-output-queue (evaluate-expression-helper operator output-queue)))
+                    (handle-parentheses new-operator-stack new-output-queue)
                 )
-                (progn
-                    (push (concatenate 'string "(" (logical-operator-to-lisp op) " " operand1 " " operand2 ")") output-queue)
-                    (if (null operator-stack)
-                        (list-to-string output-queue 0 "")
-                        (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1))
+            )
+        )
+    )
+)
+
+(defun handle-operator (current-char operator-stack operator-queue)
+    ;; Processes the operator and the stack.
+    (if (null operator-stack)
+        (values (cons current-char operator-stack) operator-queue)
+        (let ((top-operator (car operator-stack)))
+            (if (or (null top-operator) (string= top-operator "(") (>= (precedence current-char) (precedence top-operator)))
+                (values (cons current-char operator-stack) operator-queue)
+                (let ((new-output-queue (evaluate-expression-helper top-operator operator-queue)))
+                    (handle-operator current-char (cdr operator-stack) new-output-queue)
+                )
+            )
+        )
+    )
+)
+
+(defun evaluate-infix-expression (infix operator-stack output-queue index)
+    ;; Evaluates the infix expression and returns the lisp equivalent.
+    ;; The infix expression is reversed and processed from right to left.
+    ;; The operator stack is used to store the operators.
+    ;; The output queue is used to store the operands.
+    (if (>= index (length infix))
+        (multiple-value-bind (op remaining-operator-stack) (functional-pop operator-stack)
+            (if (null op)
+                (list-to-string output-queue 0 "")
+                (let ((new-output-queue (evaluate-expression-helper op output-queue)))
+                    (if (null remaining-operator-stack)
+                        (list-to-string new-output-queue 0 "")
+                        (evaluate-infix-expression infix remaining-operator-stack new-output-queue (+ index 1))
                     )
                 )
             )
         )
-        (let* ((current-char (nth index infix)))
+        (let ((current-char (nth index infix)))
             (cond
-                ((string= current-char ")") (push current-char operator-stack))
-                ((string= current-char "(") (loop for i from 0 to (- (length operator-stack) 1) do
-                                                (let ((operator (pop operator-stack)))
-                                                    (if (string= operator ")")
-                                                        (return)
-                                                        (let* ((operand1 (pop output-queue)) (operand2 (pop output-queue)))
-                                                            (push (concatenate 'string "(" (logical-operator-to-lisp operator) " " operand1 " " operand2 ")") output-queue)
-                                                        )
-                                                    )
-                                                    (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1))
-                                                )
-                                            ))
-                ((is-operator current-char) (if (null operator-stack)
-                                                (push current-char operator-stack)
-                                                (let ((top-operator (car operator-stack)))
-                                                    (if (or (null top-operator) (string= top-operator "(") (>= (precedence current-char) (precedence top-operator)))
-                                                        (push current-char operator-stack)
-                                                        (let* ((op (pop operator-stack)) 
-                                                                (operand1 (pop output-queue)) (operand2 (pop output-queue)))
-                                                            (push (concatenate 'string "(" (logical-operator-to-lisp op) " " operand1 " " operand2 ")") output-queue)
-                                                            (push current-char operator-stack)
-                                                        )
-                                                    )
-                                                )
-                                            ))
-                (t (push current-char output-queue))
+                ((string= current-char ")") (evaluate-infix-expression infix (cons current-char operator-stack) output-queue (+ index 1)))
+                ((string= current-char "(") (multiple-value-bind (new-operator-stack new-output-queue) (handle-parentheses operator-stack output-queue)
+                                                (evaluate-infix-expression infix new-operator-stack new-output-queue (+ index 1)))
+                )
+                ((is-operator current-char) (multiple-value-bind (new-operator-stack new-output-queue) (handle-operator current-char operator-stack output-queue)
+                                                (evaluate-infix-expression infix new-operator-stack new-output-queue (+ index 1)))
+                )
+                (t (evaluate-infix-expression infix operator-stack (functional-push current-char output-queue) (+ index 1)))
             )
-            (evaluate-infix-logical-expression infix operator-stack output-queue (+ index 1))
         )
     )
 )
@@ -363,7 +341,7 @@
                             (concatenate 'string "(setq " (string-trim " " param-name) " (" (string-trim " " func-name) " " 
                                         (list-to-string (split-string "," func-params 0 '() "" nil) 0 " ") "))")
                     )
-                    (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression 
+                    (concatenate 'string "(setq " (string-trim " " param-name) " " (evaluate-infix-expression 
                             (reverse (split-string " " (add-space-before-after-delimiters arithmetic-expr 0) 0 '() "" nil)) '() '() 0) ")")
                 
                 )
@@ -403,9 +381,9 @@
                             )
                     )
                     (if (string= (line-type next-line) "variable-assignment")
-                        (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression 
+                        (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-expression 
                             (reverse (split-string " " (add-space-before-after-delimiters arithmetic-expr 0) 0 '() "" nil)) '() '() 0) ")")
-                        (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-arithmetic-expression 
+                        (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-expression 
                             (reverse (split-string " " (add-space-before-after-delimiters arithmetic-expr 0) 0 '() "" nil)) '() '() 0) "))")
                     )
                 )
@@ -543,7 +521,7 @@
             (return-value (subseq trimmed-line 6 (- (length trimmed-line) 1)))
             (splitted-line (split-string " " (add-space-before-after-delimiters return-value 0) 0 '() "" nil)))
         (if splitted-line
-            (concatenate 'string (evaluate-infix-arithmetic-expression (reverse splitted-line) '() '() 0))
+            (concatenate 'string (evaluate-infix-expression (reverse splitted-line) '() '() 0))
             "nil"
         )
     )
@@ -606,7 +584,7 @@
             (arithmetical-expr (subseq trimmed-line 0 (- (length trimmed-line) 1)))
             (splitted-line (split-string " " (add-space-before-after-delimiters arithmetical-expr 0) 0 '() "" nil)))
         (if splitted-line
-            (concatenate 'string (evaluate-infix-arithmetic-expression (reverse splitted-line) '() '() 0))
+            (concatenate 'string (evaluate-infix-expression (reverse splitted-line) '() '() 0))
             "nil"
         )
     )
@@ -622,7 +600,7 @@
             (logical-expr (subseq trimmed-line 0 (- (length trimmed-line) 1)))
             (splitted-line (split-string " " (add-space-before-after-logical-delimiters logical-expr 0) 0 '() "" nil)))
         (if splitted-line
-            (concatenate 'string (evaluate-infix-logical-expression (reverse splitted-line) '() '() 0))
+            (concatenate 'string (evaluate-infix-expression (reverse splitted-line) '() '() 0))
             "nil"
         )
     )
