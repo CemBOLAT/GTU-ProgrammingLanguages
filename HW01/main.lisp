@@ -182,10 +182,14 @@
             (increment-value (extract-increment-value (nth 2 splitted-line) variable-name))
         )
         (cond
-            ((string= relational-operator "<") (concatenate 'string "(loop for " variable-name " from " start-value " below " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
-            ((string= relational-operator ">") (concatenate 'string "(loop for " variable-name " from " start-value " downto " "( + " end-value " 1)" " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
-            ((string= relational-operator ">=") (concatenate 'string "(loop for " variable-name " from " start-value " downto " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
-            ((string= relational-operator "<=") (concatenate 'string "(loop for " variable-name " from " start-value " to " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
+            ((string= relational-operator "<") (concatenate 'string "(loop for " variable-name " from " start-value 
+                " below " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
+            ((string= relational-operator ">") (concatenate 'string "(loop for " variable-name " from " start-value 
+                " downto " "( + " end-value " 1)" " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
+            ((string= relational-operator ">=") (concatenate 'string "(loop for " variable-name " from " start-value 
+                " downto " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
+            ((string= relational-operator "<=") (concatenate 'string "(loop for " variable-name " from " start-value 
+                " to " end-value " by " increment-value " do" '(#\Newline) (add-till-space "(progn" line 0)))
         )
     )
 )
@@ -267,11 +271,7 @@
                 (values new-operator-stack output-queue)
                 (let ((new-output-queue (evaluate-expression-helper operator output-queue)))
                     (handle-parentheses new-operator-stack new-output-queue)
-                )
-            )
-        )
-    )
-)
+                )))))
 
 (defun handle-operator (current-char operator-stack operator-queue)
     ;; Processes the operator and the stack.
@@ -282,11 +282,7 @@
                 (values (cons current-char operator-stack) operator-queue)
                 (let ((new-output-queue (evaluate-expression-helper top-operator operator-queue)))
                     (handle-operator current-char (cdr operator-stack) new-output-queue)
-                )
-            )
-        )
-    )
-)
+                )))))
 
 (defun evaluate-infix-expression (infix operator-stack output-queue index)
     ;; Evaluates the infix expression and returns the lisp equivalent.
@@ -386,10 +382,7 @@
                         (concatenate 'string "(" (string-trim " " param-name) " " (evaluate-infix-expression 
                             (reverse (split-string " " (add-space-before-after-delimiters arithmetic-expr 0) 0 '() "" nil)) '() '() 0) "))")
                     )
-                )
-            )
-    )
-)
+                ))))
 
 (defun definition-func-parameters (parameters)
     ;; takes a list of parameters and returns the string except the data type
@@ -529,10 +522,14 @@
 
 (defun get-string-between-quotes (line)
     (let* ((quote-start (position #\" line))
-            (quote-end (position #\" line :start (+ quote-start 1))))
-        (if (and quote-start quote-end)
-            (subseq line (+ quote-start 1) quote-end)
-            "")))
+            (after-first-quote (subseq line (+ quote-start 1) (length line)))
+            (quote-end (position #\" after-first-quote)))
+        (if (null quote-start)
+            ""
+            (subseq after-first-quote 0 quote-end)
+        )
+    )
+)
 
 (defun extract-formatters (line index)
     ;; extracts the new line character from the given line
