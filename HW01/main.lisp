@@ -521,6 +521,8 @@
 )
 
 (defun get-string-between-quotes (line)
+    ;; extracts the string between the double quotes
+    ;; if the double quotes are not found then returns the line
     (let* ((quote-start (position #\" line))
             (after-first-quote (subseq line (+ quote-start 1) (length line)))
             (quote-end (position #\" after-first-quote)))
