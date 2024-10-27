@@ -1,0 +1,81 @@
+;; Production Rules:
+<program> ::= <line>* 
+
+<line> ::= <if-statement> 
+         | <for-loop> 
+         | <while-loop> 
+         | <variable-assignment> 
+         | <function-definition> 
+         | <function-declaration> 
+         | <return-statement> 
+         | <variable-re-assignment> 
+         | <end-block> 
+         | <empty-line> 
+         | <logical-expression> 
+         | <arithmetic-expr> 
+         | <function-call>
+
+<if-statement> ::= "if" <space> "(" <logical-expression> ")" <space> "{" <line>* "}"
+
+<for-loop> ::= "for" <space> "(" <variable-assignment> <space> ";" <logical-expression> <space> ";" <arithmetic-expr> <space> ")" <space> "{" <line>* "}"
+
+<while-loop> ::= "while" <space> "(" <logical-expression> ")" <space> "{" <line>* "}"
+
+<variable-assignment> ::= <data-type> <space> <param-name> <space> "=" <space> <arithmetic-expr> <space> ";"
+                         | <data-type> <space> <param-name> <space> "=" <space> <func-name> <space> "(" <function-call-params> ")" <space> ";"
+
+<function-definition> ::= <data-type> <space> <func-name> <space> "(" <function-declaration-params> ")" <space> "{" <line>* "}"
+
+<function-declaration> ::= <data-type> <space> <func-name> <space> "(" <function-declaration-params> ")" <space> ";"
+
+<return-statement> ::= "return" <space> <arithmetic-expr> <space> ";"
+
+<variable-re-assignment> ::= <param-name> <space> "=" <space> <arithmetic-expr> <space> ";"
+
+<end-block> ::= "}"
+
+<empty-line> ::= <space> | <new-line> | <tab>
+
+<logical-expression> ::= <literal> <space> <logical-operator> <space> <literal> 
+                       | <literal> <space> <logical-operator> <space> <logical-expression>
+
+<logical-operator> ::= "&&" | "||" | "!"
+
+<literal> ::= <param-name> | <number>
+
+<arithmetic-expr> ::= <term> <space> "+" <space> <term> 
+                    | <term> <space> "-" <space> <term> 
+                    | <term>
+
+<term> ::= <factor> <space> "*" <space> <factor> 
+         | <factor> <space> "/" <space> <factor> 
+         | <factor>
+
+<factor> ::= <number> 
+           | <param-name> 
+           | <space> "(" <space> <arithmetic-expr> <space> ")"
+
+<function-declaration-params> ::= <data-type> <space> <param-name> 
+                                | <data-type> <space> <param-name> "," <space> <function-declaration-params>
+
+<function-call-params> ::= <param-name> 
+                         | <param-name> "," <space> <function-call-params>
+
+<data-type> ::= "int" | "float" | "double" | "char" | "void"
+
+<param-name> ::= <letter> 
+               | <letter> <param-name> 
+               | <letter> <number> 
+               | <letter> <number> <param-name>
+
+<func-name> ::= <letter> 
+              | <letter> <func-name> 
+              | <letter> <number> 
+              | <letter> <number> <func-name>
+
+<number> ::= <digit> 
+           | <digit> <number>
+
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<letter> ::= "a" | "b" | "c" | ... | "z" | "A" | "B" | ... | "Z"
+<space> ::= " " | "\t" | "\n"
