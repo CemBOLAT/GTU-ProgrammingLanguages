@@ -1,0 +1,70 @@
+.data
+	enter_number_str: .asciiz "Please Enter Number: \n"
+	palidrome_str: .asciiz "Yes! The number that you entered is Palidrome! \n"
+	no_palidrome_str: .asciiz "No! The number that you entered is not Palidrome! \n"
+	
+	
+.text
+	.globl main
+	
+	
+main:
+	la $a0 enter_number_str
+	jal print_str
+	jal scan_number
+	move $s1 $v0 # s1 contains the number to check
+	move $a0 $s1
+	jal reverse_number
+	move $s2 $v0 # palidrome of number.
+	beq $s1 $s2 print_palidrome
+	la $a0 no_palidrome_str
+	jal print_str
+	move $a0 $s2
+	jal print_int
+	j exit
+
+print_palidrome:
+	la $a0 palidrome_str
+	jal print_str
+	move $a0 $s2
+	jal print_int
+	j exit
+	
+reverse_number:
+	move $t0 $a0	#number to swap
+	li $t1 0	#return value
+	li $t2 10	# divide and modula
+	
+reverse_process:
+	beq $t0 $zero end_reverse
+	div $t0 $t2  # hi remainder
+	mfhi $t3
+	mflo $t0
+	mult $t1 $t2
+	mflo $t1
+	add $t1 $t1 $t3
+	j reverse_process
+
+end_reverse:
+	move $v0 $t1
+	jr $ra
+	
+print_int:
+	li $v0 1
+	syscall
+	jr $ra
+
+print_str:
+	li $v0 4
+	syscall
+	jr $ra
+
+scan_number:
+	li $v0 5
+	syscall
+	jr $ra
+	
+exit:
+	li $v0 10
+	syscall
+	
