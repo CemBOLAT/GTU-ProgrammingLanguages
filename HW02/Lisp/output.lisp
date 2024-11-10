@@ -1,8 +1,0 @@
-;; hello.g++
-(deffun sumup (x)
-;; function body
-(if (equal x 0)
-1
-(+ x (sumup (- x 1)))
-)
-)
