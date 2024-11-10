@@ -1,7 +1,16 @@
-
 all:
 	flex -o gpp_lexer.c gpp_lexer.l
-	gcc -o gpp_lexer gpp_lexer.c -L/opt/homebrew/opt/flex/lib -lfl
+	gcc -o gpp_lexer gpp_lexer.c -lfl
 
-input:
+input: gpp_lexer
 	./gpp_lexer input.txt
+
+test: gpp_lexer
+	./gpp_lexer test.txt
+
+re:
+	make clean
+	make all
+
+clean:
+	rm -f gpp_lexer.c gpp_lexer

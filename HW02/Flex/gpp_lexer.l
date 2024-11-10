@@ -1,20 +1,27 @@
 %{
+    /* Definitions */
     #include <stdio.h>
     #include <string.h>
 %}
 
 /* ;; is the comment delimiter */
 COMMENT [;;].*
-/* unsigned integers or unsigned fractions with : in between 2:3 or 2: or :3 */
-VALUEF [0]|[1-9][0-9]*|[0-9]+[:][0-9]+|[0-9]+[:]|[:][0-9]+
+/* unsigned integers or unsigned fractions with : or f  in between 2:3 or 2: or :3 */
+VALUEI [0]|[1-9][0-9]*
+VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:f]{VALUEI}
 /* identifier: Any combination of alphabetical characters, digits and “_” with only leading alphabetical characters. */
 IDENTIFIER  [a-zA-Z][a-zA-Z0-9_]*
+OP_PLUS     [+]
+OP_MINUS    [-]
+OP_DIV      [/]
+OP_MULT     [*]
+OP_OP       [(]
+OP_CP       [)]
+OP_COMMA    [,]
 
-
-/* rules seciton */
 
 %%
-
+    /* Pattern Action */
     /* KEYWORDS */
 
 and      { printf("KW_AND\n");}
@@ -36,19 +43,20 @@ print    { printf("KW_DISP\n");}
 true     { printf("KW_TRUE\n");}
 false    { printf("KW_FALSE\n");}
 
-    /* OPERATORS */
-"+"      { printf("OP_PLUS\n");}
-"-"      { printf("OP_MINUS\n");}
-"/"      { printf("OP_DIV\n");}
-"*"      { printf("OP_MULT\n");}
-"("      { printf("OP_OP\n");}
-")"      { printf("OP_CP\n");}
-","      { printf("OP_COMMA\n");}
+    /* COMMENT VALUEs IDENTIFER */
 
-    /* COMMENT VALUE IDENTIFER */
+{OP_PLUS}       {printf("OP_PLUS\n");}
+{OP_MINUS}      {printf("OP_MINUS\n");}
+{OP_DIV}        {printf("OP_DIV\n");}
+{OP_MULT}       {printf("OP_MULT\n");}
+{OP_OP}         {printf("OP_OP\n");}
+{OP_CP}         {printf("OP_CP\n");}
+{OP_COMMA}      {printf("OP_COMMA\n");}
 
+    /* COMMENT VALUEs IDENTIFER */
 {COMMENT}       {printf ("COMMENT\n");}
 {VALUEF}        {printf("VALUEF\n");}
+{VALUEI}        {printf("VALUEI\n");}
 {IDENTIFIER}    {printf("IDENTIFIER\n");}
 
     /* WHITESPACE */
@@ -59,12 +67,9 @@ false    { printf("KW_FALSE\n");}
 
 . { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext);} 
 
-    /* End of File */
 %% 
 
-int yywrap() {
-    return 1;
-}
+int yywrap() {}
 
 int main(int argc , char** argv)
 {
