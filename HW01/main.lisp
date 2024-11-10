@@ -715,5 +715,3 @@
                     (main (cons converted-line converted-lines) (+ index 1)))))))
 
 (main '() 1)
-
-(format t "Hello World %d\n");
