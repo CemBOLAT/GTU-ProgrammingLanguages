@@ -14,3 +14,5 @@ re:
 
 clean:
 	rm -f gpp_lexer.c gpp_lexer
+
+.PHONY: all input test re clean
