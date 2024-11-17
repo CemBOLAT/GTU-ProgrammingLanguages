@@ -1,5 +1,3 @@
-
-
 all:
 	@echo "'make flex' to generate the gpp_lexer.c file"
 	@echo "'make c' to compile the gpp_lexer.c file"
@@ -9,14 +7,17 @@ all:
 
 flex:
 	flex -o gpp_lexer.c gpp_lexer.l
-	
-c: flex
+
+gpp_lexer.c: gpp_lexer.l
+	flex -o gpp_lexer.c gpp_lexer.l
+
+c: gpp_lexer.c
 	gcc -o gpp_lexer gpp_lexer.c -lfl
 
 input: gpp_lexer
 	./gpp_lexer input.txt
 
-re: clean all
+re: clean c
 
 clean:
 	rm -f gpp_lexer.c gpp_lexer
