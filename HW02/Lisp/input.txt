@@ -9,6 +9,4 @@
 (list 1 2 123)
 (listQ 1 2 123)
 
-(liste 1 2f3)
-
-(list+ 1 2f3)
+(liste 1 f3)

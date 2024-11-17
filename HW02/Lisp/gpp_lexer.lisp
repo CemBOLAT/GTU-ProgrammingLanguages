@@ -4,6 +4,7 @@
     ;; Read a digit (0-9): transition to q2 (potential integer)
     ;; Read '+ - / * ( ) ,': transition to the respective operator state (final state for operators) (q5)
     ;; Read ; : transition to q3 /comment state
+    ;; Read ':': transition to q4 (potential fraction)
     ;; Read whitespace: stay in q0
 ;; 2. Identifier or keyword state (q1)
     ;; Read a letter (a-zA-Z_) or digit (0-9): stay in q1
@@ -18,6 +19,9 @@
 ;; 4. VALUEF state (q4)
     ;; Read a digit (0-9): stay in q4
     ;; Read whitespace: generate VALUEF token and transition to q0
+;; 5. Operator state (q5)
+    ;; Read next character: if it is '(' ')' or whitespace, generate the operator token and transition to q0
+    ;; Otherwise, syntax error
 
 (setf keyword-list-and-value '(
     ("and" "KW_AND") ("or" "KW_OR") ("not" "KW_NOT") ("equal" "KW_EQUAL")
@@ -109,13 +113,15 @@
     ;; Read a letter (a-zA-Z): transition to q1 (potential identifier or keyword)
     ;; Read a digit (0-9): transition to q2 (potential integer)
     ;; Read '+ - / * ( ) ,': transition to the respective operator state (final state for operators) (q5)
-    ;; Read ; : transition to q3 /comment state
+    ;; Read ';' : transition to q3 /comment state
+    ;; Read ':': transition to q4 (potential fraction)
     ;; Read whitespace: stay in q0
     (let ((char (char line index)))
         (cond
             ((is-letter char) (state-1 line (+ index 1) (string char)))
             ((is-digit char) (state-2 line (+ index 1) (string char)))
-            ((is-operator char) (values (+ index 1) (list (operator-value char))))
+            ((is-operator char) (state-5 line (+ index 1) char))
+            ((char= char #\:) (state-4 line (+ index 1) (string char)))
             ((char= char #\;) (state-3 line (+ index 1)))
             ((is-white-space char) (values (+ index 1) nil))
             (t (error "Syntax error: Invalid character: ~a" char)))))
@@ -137,7 +143,7 @@
                             (values (+ index 1) (list (identifier-or-keyword token)))
                             (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
                                 (values (+ index 1) (list (identifier-or-keyword token) (operator-value char)))
-                                (error "Syntax error: ~a cannot token be followed by ~a" token char)
+                                (error "Syntax error: ~a cannot be followed by ~a" token char)
                             )
                         )
                     )
@@ -165,18 +171,10 @@
                                 (values (+ index 1) (list "VALUEI"))
                                 (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
                                     (values (+ index 1) (list "VALUEI" (operator-value char))) ; operator and VALUEI token
-                                    (error "Syntax error: ~a cannot token be followed by ~a" token char)
-                                )
-                            )
-                        )
-                    )
-                )
+                                    (error "Syntax error: ~a cannot token be followed by ~a" token char))))))
                 (values index (list "VALUEI")) ; end of the line
-            )
-        ))
-        (state-2-helper line index token))
-    )
-)
+            )))
+        (state-2-helper line index token))))
 
 (defun state-3 (line index)
     ;; if the next char is ';' stay in state-3 and ignore the rest of the line
@@ -186,13 +184,8 @@
             (let ((char (char line index)))
                 (if (char= char #\;)
                     (values line-length (list "COMMENT")) ; end of the line
-                    (error "Syntax error: Invalid character: ~a" char) ; syntax error
-                )
-            )
-            (error "Syntax error: Missing ';' at the end of the line") ; syntax error
-        )
-    )
-)
+                    (error "Syntax error: Invalid character: ~a" char))) ; syntax error
+            (error "Syntax error: Missing ';' at the end of the line")))) ; syntax error
 
 (defun state-4 (line index token)
     ;; Go till the end of the fraction with the following rules:
@@ -210,17 +203,22 @@
                             (values (+ index 1) (list "VALUEF"))
                             (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
                                 (values (+ index 1) (list "VALUEF" (operator-value char)))
-                                (error "Syntax error: ~a cannot token be followed by ~a" token char)
-                            )
-                        )
-                    )
-                )
-                (values index (list "VALUEF"))
-            )
-        ))
-        (state-4-helper line index token))
-    )
-)
+                                (error "Syntax error: ~a cannot be followed by ~a" token char)))))
+                (values index (list "VALUEF")))))
+        (state-4-helper line index token))))
+
+(defun state-5 (line index token)
+    ;; State for operators
+    ;; Check the next char - if it is not '(' ')' or whitespace, syntax error
+    ;; Returns the operator token and transitions to state-0
+    (if (or (= (char-code token) 40) (= (char-code token) 41))
+        (values index (list (operator-value (string token))))
+        (if (< index (length line))
+            (let ((next-char (char line index)))
+                (if (or (= (char-code next-char) 40) (= (char-code next-char) 41) (is-white-space next-char))
+                    (values index (list (operator-value (string token))))
+                    (error "Syntax error: ~a cannot be followed by ~a" token next-char)))
+            (values index (list (operator-value (string token)))))))
 
 (defun dfa (line)
     ;; DFA for the lexer that returns the list of tokens
@@ -231,11 +229,8 @@
                     (if token ; if token is not nil (not whitespace)
                         (dfa-helper line new-index (append list token))
                         (dfa-helper line new-index list)
-                    )
-                )
-                list
-            )
-        ))
+                    ))
+                list)))
         (dfa-helper line 0 nil))))
 
 (defun repl-process ()
@@ -261,9 +256,7 @@
                             (if line
                                 (let ((line-tokens (dfa line)))
                                     (read-file-helper (append accumulated-tokens line-tokens))) ;; read the next line
-                                (print-list accumulated-tokens) ;; end of the file
-                            )
-                        )))
+                                (print-list accumulated-tokens))))) ;; end of the file
                 (read-file-helper nil)))))
 
 (defun gppinterpreter ()

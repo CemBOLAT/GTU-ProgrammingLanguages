@@ -4,21 +4,17 @@
     #include <string.h>
 %}
 
-/* ;; is the comment delimiter */
-COMMENT [;;].*
+/* Comment Delimeter is ';;' */
+COMMENT ";;".*
 /* unsigned integers or unsigned fractions with : or f  in between 2:3 or 2: or :3 */
 VALUEI [0]|[1-9][0-9]*
-VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:f]{VALUEI}
+VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:]{VALUEI}
 /* identifier: Any combination of alphabetical characters, digits and “_” with only leading alphabetical characters. */
 IDENTIFIER  [a-zA-Z][a-zA-Z0-9_]*
-OP_PLUS     [+]
-OP_MINUS    [-]
-OP_DIV      [/]
-OP_MULT     [*]
-OP_OP       [(]
-OP_CP       [)]
-OP_COMMA    [,]
 
+/* Invalid characters for identifier */
+INVALID_CHAR [^a-zA-Z0-9_() \t\n\r\b\f\v;]
+INVALID_NUMBER [^0-9() \t\n\r\b\f\v;]
 
 %%
     /* Pattern Action */
@@ -45,13 +41,13 @@ false    { printf("KW_FALSE\n");}
 
     /* COMMENT VALUEs IDENTIFER */
 
-{OP_PLUS}       {printf("OP_PLUS\n");}
-{OP_MINUS}      {printf("OP_MINUS\n");}
-{OP_DIV}        {printf("OP_DIV\n");}
-{OP_MULT}       {printf("OP_MULT\n");}
-{OP_OP}         {printf("OP_OP\n");}
-{OP_CP}         {printf("OP_CP\n");}
-{OP_COMMA}      {printf("OP_COMMA\n");}
+"+"             {printf("OP_PLUS\n");}
+"-"             {printf("OP_MINUS\n");}
+"/"             {printf("OP_DIV\n");}
+"*"             {printf("OP_MULT\n");}
+"("             {printf("OP_OP\n");}
+")"             {printf("OP_CP\n");}
+","             {printf("OP_COMMA\n");}
 
     /* COMMENT VALUEs IDENTIFER */
 {COMMENT}       {printf ("COMMENT\n");}
@@ -63,9 +59,15 @@ false    { printf("KW_FALSE\n");}
 
 [ \t\n\r\b\f\v] {;}
 
+    /* INVALID TOKENS */
+
+{IDENTIFIER}{INVALID_CHAR}+ { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext); yyterminate();}
+{VALUEI}{INVALID_NUMBER}+ { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext); yyterminate();}
+{VALUEF}{INVALID_NUMBER}+ { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext); yyterminate();}
+
     /* Other syntax gives erros */
 
-. { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext);} 
+. { printf("SYNTAX ERROR: '%s' cannot be tokenized\n",yytext); yyterminate();}
 
 %% 
 
