@@ -1,75 +1,38 @@
-(declaim (ftype (function (integer integer) integer) sum))
+(< #include stdio.h)
 
-(defun sum (a b) 
-(let* ()
-    (+ a b)
-))
-
-(defun mult (a b c) 
-(let* ()
-    (+ a (* b c))
-))
-
-(defun div (a b) 
-(let* ()
-    (/ a b)
-))
-
-(defun pow (a b) 
-(let* (
-    (result 1)
-    (i 0))
-    (loop for i from 0 below b by 1 do
-    (progn
-        (setq result (* result a))
-    ))
-    result
-))
-
-(defun print_test () 
-(let* ()
-    (format t "Hello World~%")
-    0
-))
+(declaim (ftype (function (integer integer) integer) weighted_sum))
 
 (defun main () 
 (let* (
     (x 10)
     (y 20)
-    (i 0)
-    (result (sum x y))
-    (power (pow 2 3)))
+    (sum 0))
+
+    (setq sum (weighted_sum x y))
     
-    (if (> result 25)
-    (progn
-        (format t "Result is greater than 25~%")
-        (setq x 5)
-    ))
-
-    (if (or (and (> x 5) (< x 30)) (< y 30))
-    (progn
-        (format t "x is greater than 5 and y is less than 30~%")
-    ))
-
-    (loop for i from 0 below 10 by 1 do
-    (progn
-        (format t "~a~%" i)
-    ))
-
-    (setq x (mult x y result))
-    (format t "Result: ~a~%" x)
-
-    (setq x (+ x 1))
-
-    (loop while (> x 600) do
-    (progn
-        (format t "~a~%" x)
-        (setq x (/ x 2))
-    ))
-
-    (print_test)
-
-    (format t "Power: ~a~%" power)
-
+    (format t "The sum is: ~a~%" sum)
     0
+))
+
+(defun weighted_sum (a b) 
+(let* (
+    (result 0)
+    (i 0))
+    (loop for i from 0 below a by 1 do
+    (progn
+        (if (eq (mod i 2) 0)
+        (progn
+            (setq result + i)
+        ))
+    ))
+    (setq i 0)
+    (loop while (< i b) do
+    (progn
+        (if (/= (mod i 2) 0)
+        (progn
+            (setq result + i)
+        ))
+        (+ (+ i ==) )
+    ))
+    result
 ))

@@ -81,7 +81,6 @@
 (defun convert-if-statement (line next-line)
     ;; line example: "if (a < 10) {"
     ;; first remove unnecessary whitespaces and if + paranthesis
-    ;; then add space before and after the logical delimiters
     ;; then split the line by ' ' to get the parts
     ;; then evaluate the infix logical expression
     (let* ((trimmed-line (list-to-string (split-string " " line 0 '() "" nil) 0 " ")) ;; '(#\Newline) "(progn"
@@ -238,6 +237,7 @@
         ((string= operator "!") "not")
         ((string= operator "==") "eq")
         ((string= operator "!=") "/=")
+        ((string= operator "%") "mod")
         (t operator)
     )
 )
@@ -631,6 +631,7 @@
 
 
 (defun conversion-foo (type)
+    (format t "type: ~a~%" type)
     ;; returns the proper conversion function for the given type
     (cond
         ((string= type "if-statement") #'convert-if-statement)
@@ -685,7 +686,7 @@
                 (search "==" line-without-space) (search "!=" line-without-space) 
                 (search "<" line-without-space) (search ">" line-without-space)) "logical-expression") 
             ((or (search "(" line-without-space) (search ")" line-without-space) (search "," line-without-space)) "function-call") ;; if the line has a function call
-
+            (t line)
         )))
 
 
@@ -698,7 +699,6 @@
                 (concatenate 'string current-char (add-till-space line original-line (+ index 1)))
                 line
             ))))
-    
 
 (defun main (converted-lines index)
     ;; main function that reads the file and converts the lines

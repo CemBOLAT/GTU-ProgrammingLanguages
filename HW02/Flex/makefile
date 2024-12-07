@@ -8,16 +8,15 @@ all:
 flex:
 	flex -o gpp_lexer.c gpp_lexer.l
 
-gpp_lexer.c: gpp_lexer.l
-	flex -o gpp_lexer.c gpp_lexer.l
-
-c: gpp_lexer.c
+gpp_lexer: gpp_lexer.c
 	gcc -o gpp_lexer gpp_lexer.c -lfl
+
+c: gpp_lexer
 
 input: gpp_lexer
 	./gpp_lexer input.txt
 
-re: clean c
+re: clean gpp_lexer
 
 clean:
 	rm -f gpp_lexer.c gpp_lexer
