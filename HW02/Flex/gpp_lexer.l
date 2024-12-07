@@ -7,7 +7,7 @@
 /* Comment Delimeter is ';;' */
 COMMENT ";;".*
 /* unsigned integers or unsigned fractions with : or f  in between 2:3 or 2: or :3 */
-VALUEI [0]|[1-9][0-9]*
+VALUEI [0-9]+
 VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:]{VALUEI}
 /* identifier: Any combination of alphabetical characters, digits and “_” with only leading alphabetical characters. */
 IDENTIFIER  [a-zA-Z][a-zA-Z0-9_]*

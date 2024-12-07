@@ -8,8 +8,13 @@ all:
 flex:
 	flex -o gpp_lexer.c gpp_lexer.l
 
-gpp_lexer: gpp_lexer.c
+gpp_lexer.c: gpp_lexer.l
+	flex -o gpp_lexer.c gpp_lexer.l
+
+c: gpp_lexer.c
 	gcc -o gpp_lexer gpp_lexer.c -lfl
+
+c: gpp_lexer
 
 c: gpp_lexer
 
