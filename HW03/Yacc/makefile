@@ -1,33 +1,33 @@
+# Makefile for Flex and Yacc project
 
+# Compiler and Flags
+CC = gcc
+CFLAGS = -Wall -g
 
-all:
-	@echo "'make yacc' to generate the gpp_parser.c file"
-	@echo "'make c' to compile the gpp_parser.c file"
-	@echo "'make input' to run the lexer with input.txt"
-	@echo "'make clean' to remove the gpp_lexer.c and gpp_lexer files"
-	@echo "'make re' to remove the gpp_lexer.c and gpp_lexer files and recompile"
+# Flex and Yacc files
+LEX_FILE = gpp_lexer.l
+YACC_FILE = gpp_interpreter.y
+HEADER_FILE = yacc_helper.h
 
-yacc: yacc_helper.h gpp_interpreter.y
-	bison -o gpp_parser.c gpp_interpreter.y
-	flex -o gpp_lexer.c gpp_lexer.l
-	gcc -o gpp_interpreter gpp_lexer.c gpp_parser.c -ll -w
+# Output files
+LEX_OUTPUT = gpp_lexer.c
+YACC_OUTPUT = gpp_parser.c
+YACC_HEADER = gpp_parser.h
+EXEC_OUTPUT = gpp_interpreter
 
-gpp_lexer.c: gpp_lexer.l
-	flex -o gpp_lexer.c gpp_lexer.l
+# Targets
+all: $(EXEC_OUTPUT)
 
-gpp_parser.c: gpp_interpreter.y
-	yacc -d -o gpp_parser.c gpp_interpreter.y
+$(EXEC_OUTPUT): $(LEX_OUTPUT) $(YACC_OUTPUT)
+	$(CC) $(CFLAGS) -o $(EXEC_OUTPUT) $(LEX_OUTPUT) $(YACC_OUTPUT) -ll -w
 
-c: gpp_lexer.c gpp_parser.c
-	gcc -o gpp_interpreter gpp_lexer.c gpp_parser.c -ll -w
+$(LEX_OUTPUT): $(LEX_FILE)
+	flex -o $(LEX_OUTPUT) $(LEX_FILE)
 
-input: gpp_interpreter
-	./gpp_interpreter input.txt
-
-re: clean c
+$(YACC_OUTPUT): $(YACC_FILE) $(HEADER_FILE)
+	yacc -d -o $(YACC_OUTPUT) $(YACC_FILE)
 
 clean:
-	rm -f gpp_lexer.c
-	rm -f gpp_parser.c gpp_parser.h gpp_interpreter
+	rm -f $(LEX_OUTPUT) $(YACC_OUTPUT) $(YACC_HEADER) $(EXEC_OUTPUT)
 
-.PHONY: all input test re clean
+re: clean all

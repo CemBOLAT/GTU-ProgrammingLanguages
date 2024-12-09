@@ -23,16 +23,69 @@
     ;; Read next character: if it is '(' ')' or whitespace, generate the operator token and transition to q0
     ;; Otherwise, syntax error
 
+
+;; START           → INPUT
+;; INPUT           → COMMENT | EXPLIST
+;; EXP             → OP_OP OP_PLUS EXP EXP OP_CP
+;;                 | OP_OP OP_MINUS EXP EXP OP_CP
+;;                 | OP_OP OP_MULT EXP EXP OP_CP
+;;                 | OP_OP OP_DIV EXP EXP OP_CP
+;;                 | VALUEF
+;;                 | VALUEI
+;;                 | IDENTIFIER
+;;                 | SET
+;;                 | OP_OP KW_IF EXPB EXPLIST EXPLIST OP_CP
+;;                 | OP_OP KW_IF EXPB EXPLIST OP_CP
+;;                 | OP_OP KW_FOR OP_OP IDENTIFIER EXP EXP OP_CP EXPLIST OP_CP
+;;                 | OP_OP KW_LOAD IDENTIFIER OP_CP
+;;                 | OP_OP KW_DEFFUN IDENTIFIER OP_OP PARAMLIST OP_CP EXPLIST OP_CP
+;;                 | EXPB
+;;                 | OP_OP KW_EXIT OP_CP
+;;                 | OP_OP KW_PRINT EXP OP_CP
+;;                 | LIST_INPUT
+;;                 | FCALL
+;; EXPB            → OP_OP KW_EQUAL EXP EXP OP_CP
+;;                 | OP_OP KW_LESS EXP EXP OP_CP
+;;                 | OP_OP KW_AND EXPB EXPB OP_CP
+;;                 | OP_OP KW_OR EXPB EXPB OP_CP
+;;                 | OP_OP KW_NOT EXPB OP_CP
+;;                 | KW_TRUE
+;;                 | KW_FALSE
+;;                 | OP_OP KW_NIL OP_CP
+;; EXPLIST         → EXP | EXPLIST EXP
+;; LIST_INPUT      → OP_OP KW_APPEND LIST LIST OP_CP
+;;                 | OP_OP KW_LIST VALUES OP_CP
+;;                 | OP_OP KW_CONCAT LIST LIST OP_CP
+;; LIST            → OP_APOSTROPHE OP_OP VALUES OP_CP
+;;                 | OP_APOSTROPHE OP_OP OP_CP
+;;                 | OP_OP KW_LIST VALUES OP_CP
+;;                 | KW_NIL
+;; VALUES          → VALUES VALUEF | VALUES VALUEI | VALUEF | VALUEI
+;; FCALL           → OP_OP IDENTIFIER OP_CP
+;;                 | OP_OP IDENTIFIER EXP OP_CP
+;;                 | OP_OP IDENTIFIER EXP EXP OP_CP
+;;                 | OP_OP IDENTIFIER EXP EXP EXP OP_CP
+;; PARAMLIST       → IDENTIFIER | IDENTIFIER IDENTIFIER | IDENTIFIER IDENTIFIER IDENTIFIER
+;; SET             → OP_OP KW_SET IDENTIFIER EXP OP_CP
+;;                 | OP_OP KW_DEFVAR IDENTIFIER EXP OP_CP
+
 (setf keyword-list-and-value '(
     ("and" "KW_AND") ("or" "KW_OR") ("not" "KW_NOT") ("equal" "KW_EQUAL")
     ("less" "KW_LESS") ("nil" "KW_NIL") ("list" "KW_LIST") ("append" "KW_APPEND")
     ("concat" "KW_CONCAT") ("set" "KW_SET") ("deffun" "KW_DEFFUN") ("for" "KW_FOR")
     ("if" "KW_IF") ("exit" "KW_EXIT") ("load" "KW_LOAD") ("print" "KW_DISP")
-    ("true" "KW_TRUE") ("false" "KW_FALSE")
+    ("true" "KW_TRUE") ("false" "KW_FALSE") ("defvar" "KW_DEFVAR")
 ))
 
 (setf operator-list-and-value '(
-    ("+" "OP_PLUS") ("-" "OP_MINUS") ("/" "OP_DIV") ("*" "OP_MULT") ("(" "OP_OP") (")" "OP_CP") ("," "OP_COMMA")
+    ("+" "OP_PLUS") ("-" "OP_MINUS") ("/" "OP_DIV") ("*" "OP_MULT") ("(" "OP_OP") (")" "OP_CP") ("," "OP_COMMA") ("'" "OP_APOSTROPHE")
+))
+
+(defvar *terminal-list* '(
+    "OP_PLUS" "OP_MINUS" "OP_DIV" "OP_MULT" "OP_OP" "OP_CP" "OP_COMMA" "OP_APOSTROPHE"
+    "KW_AND" "KW_OR" "KW_NOT" "KW_EQUAL" "KW_LESS" "KW_NIL" "KW_LIST" "KW_APPEND"
+    "KW_CONCAT" "KW_SET" "KW_DEFFUN" "KW_FOR" "KW_IF" "KW_EXIT" "KW_LOAD" "KW_DISP"
+    "KW_TRUE" "KW_FALSE" "KW_DEFVAR" "IDENTIFIER" "VALUEF" "VALUEI" "COMMENT"
 ))
 
 (defun is-letter (char)
@@ -142,7 +195,7 @@
                         (if (is-white-space char) ; whitespace
                             (values (+ index 1) (list (identifier-or-keyword token) token ))
                             (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
-                                (values (+ index 1) (list (list (identifier-or-keyword token) token) (list (operator-value char) char)))
+                                (values index (list (identifier-or-keyword token) token))
                                 (error "Syntax error: ~a cannot be followed by ~a" token char)
                             )
                         )
@@ -170,7 +223,7 @@
                             (if (is-white-space char) ; whitespace
                                 (values (+ index 1) (list "VALUEI" token))
                                 (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
-                                    (values (+ index 1) (list (list "VALUEI" token) (list (operator-value char) char) )) ; operator and VALUEI token
+                                    (values index (list "VALUEI" token))
                                     (error "Syntax error: ~a cannot token be followed by ~a" token char))))))
                 (values index (list "VALUEI" token)) ; end of the line
             )))
@@ -202,7 +255,7 @@
                         (if (is-white-space char)
                             (values (+ index 1) (list "VALUEF" token))
                             (if (or (= (char-code char) 40) (= (char-code char) 41)) ; ( )
-                                (values (+ index 1) (list (list "VALUEF" token) (list (operator-value char) char)))
+                                (values index (list "VALUEF" token))
                                 (error "Syntax error: ~a cannot be followed by ~a" token char)))))
                 (values index (list "VALUEF" token)))))
         (state-4-helper line index token))))
@@ -233,6 +286,19 @@
                 list)))
         (dfa-helper line 0 nil))))
 
+(defun print-test-list (list)
+    ;; Print the list of tokens Recursively
+    (if list
+        (progn
+            (let ((token (car list)))
+                (format t "token: ~a, value: ~a~%" (car token) (cadr token))
+            )
+            (print-test-list (cdr list))
+        )
+    )
+
+)
+
 (defun repl-process ()
     ;; read eval print loop for lexer
     (format t "> ")
@@ -241,7 +307,8 @@
             (if (string= (string-trim " " line) "quit") ; exit the interpreter
                 (format t "Exiting the interpreter~%")
                 (progn
-                    (format t "~a~%" (dfa line))
+                    (format t "answer-of-shift-reduce-parser: ~a~%" (top-down-parser (dfa line)))
+                    ;(print-test-list (dfa line))
                     (repl-process))))))
 
 (defun load-file (file-name)
@@ -264,6 +331,8 @@
     (let ((args *args*)) ;; get the arguments
         (if (is-valid-argument args)
             (progn
+                (setf id-temp 0)
+                (setf value-temp 0)
                 (format t "Print \"quit\" to exit the interpreter~%")
                 (load-file (nth 0 args)) ;; load the file
                 (repl-process)

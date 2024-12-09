@@ -43,6 +43,7 @@ load     { return KW_LOAD; }
 print    { return KW_PRINT; }
 true     { return KW_TRUE; }
 false    { return KW_FALSE; }
+defvar   { return KW_DEFVAR; }
 
     /* COMMENT VALUEs IDENTIFER */
 
@@ -54,6 +55,7 @@ false    { return KW_FALSE; }
 "("             {return OP_OP;}
 ")"             {return OP_CP;}
 ","             {return OP_COMMA;}
+"'"             {return OP_APOSTROPHE;}
 
     /* COMMENT VALUEs IDENTIFER */
 
