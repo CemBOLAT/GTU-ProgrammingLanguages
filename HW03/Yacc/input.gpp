@@ -1,0 +1,26 @@
+;; Testing all keywords and operators
+(deffun my_function(a b)
+    ;; Test conditional and arithmetic operators
+    (if (equal a 0)
+        (print true)
+        (and (print false) 
+             (or (less b a) 
+                 (set a(+ a 1)))
+        )
+    )
+)
+
+;; Test list operations
+(set my_list (liste 1 2 321))
+(print (append 0my_list (list 456a)))
+(print (concat my_list (list 5 6f)))
+;; Test numbers and identifiers
+(set valueI 123f597)
+(set valueF 123ff456)
+(print valueI)
+(print valueF)
+;; Test exit and nil
+(if (equal my_list nil)
+    (exit)
+)
+;; End of testing

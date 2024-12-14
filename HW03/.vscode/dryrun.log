@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/cembolat/Desktop/Common-Lisp-Exercises/HW03'
+make: Leaving directory `/Users/cembolat/Desktop/Common-Lisp-Exercises/HW03'
+ 
+make: *** No targets specified and no makefile found.  Stop.
+

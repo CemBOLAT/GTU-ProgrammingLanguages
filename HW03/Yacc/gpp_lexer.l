@@ -1,10 +1,11 @@
+
 %{
     /* Definitions */
     #include <stdio.h>
     #include <string.h>
     #include <stdbool.h>
 
-    #include "gpp_parser.h"
+    #include "y.tab.h"
 
     float custom_atof(char *input);
 %}
@@ -18,8 +19,8 @@ VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:]{VALUEI}
 IDENTIFIER  [a-zA-Z][a-zA-Z0-9_]*
 
 /* Invalid characters for identifier */
-INVALID_CHAR [^a-zA-Z0-9_() \t\n\r\b\f\v;]
-INVALID_NUMBER [^0-9() \t\n\r\b\f\v;]
+INVALID_CHAR [^a-zA-Z0-9_() \t\n\r\b\f\v;,]
+INVALID_NUMBER [^0-9() \t\n\r\b\f\v;,]
 
 %%
     /* Pattern Action */
@@ -44,6 +45,7 @@ print    { return KW_PRINT; }
 true     { return KW_TRUE; }
 false    { return KW_FALSE; }
 defvar   { return KW_DEFVAR; }
+while    { return KW_WHILE; }
 
     /* COMMENT VALUEs IDENTIFER */
 
@@ -56,20 +58,25 @@ defvar   { return KW_DEFVAR; }
 ")"             {return OP_CP;}
 ","             {return OP_COMMA;}
 "'"             {return OP_APOSTROPHE;}
+"\""            {return OP_QUOTE;}
 
     /* COMMENT VALUEs IDENTIFER */
 
 
-{COMMENT}       {return COMMENT;}
-{VALUEF}        {
-                    yylval.value = custom_atof(yytext); 
+{COMMENT}       { return COMMENT; }
+{VALUEF}        { 
+                    float result = custom_atof(yytext);
+                    yylval.sval = (char*)calloc(16, sizeof(char));
+                    snprintf(yylval.sval, sizeof(yylval.sval), "%g", result);
                     return VALUEF;
                 }
-{VALUEI}        {
-                    yylval.value = custom_atof(yytext); 
+{VALUEI}        { 
+                    float result = custom_atof(yytext);
+                    yylval.sval = (char*)calloc(16, sizeof(char));
+                    snprintf(yylval.sval, sizeof(yylval.sval), "%g", result);
                     return VALUEI;
                 }
-{IDENTIFIER}    {yylval.id = strdup(yytext); return IDENTIFIER;}
+{IDENTIFIER}    {yylval.sval = strdup(yytext); return IDENTIFIER;}
 
     /* WHITESPACE */
 
