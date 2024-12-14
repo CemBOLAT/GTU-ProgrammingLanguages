@@ -1,109 +1,3 @@
-;; DFA States and Transitions
-;; 1. Initial state: (q0)
-    ;; Read a letter (a-zA-Z): transition to q1 (potential identifier or keyword)
-    ;; Read a digit (0-9): transition to q2 (potential integer)
-    ;; Read '+ - / * ( ) ': transition to the respective operator state (final state for operators) (q5)
-    ;; Read ; : transition to q3 /comment state
-    ;; Read ':': transition to q4 (potential fraction)
-    ;; Read whitespace: stay in q0
-;; 2. Identifier or keyword state (q1)
-    ;; Read a letter (a-zA-Z_) or digit (0-9): stay in q1
-    ;; Read whitespace: generate IDENTIFIER or KEYWORD token and transition to q0
-;; 3. VALUEF or VALUEI state (q2)
-    ;; Read a digit (0-9): stay in q2
-    ;; Read ':' or 'f': transition to VALUEF state (q4)
-    ;; Read whitespace: generate VALUEI token and transition to q0
-;; 3. Comment state (q3)
-    ;; if the next char is ';' stay in q3 and ignore the rest of the line
-    ;; if the next char is not ';' Syntax error
-;; 4. VALUEF state (q4)
-    ;; Read a digit (0-9): stay in q4
-    ;; Read whitespace: generate VALUEF token and transition to q0
-;; 5. Operator state (q5)
-    ;; Read next character: if it is '(' ')' or whitespace generate the operator token and transition to q0
-    ;; Otherwise syntax error
-
-
-;; // Parser yapıları
-;; START:
-;;     /* empty */ { ; } |
-;;     INPUT { ; };
-
-;; INPUT:
-;;     EXPLIST { printf("Syntax Correct: %s\n" $1); };
-
-;; EXPLIST:
-;;     EXP { $$ = $1; }
-;;     | EXPLIST EXP { $$ = $2; };
-
-;; EXP:
-;;     OP_OP OP_PLUS EXP EXP OP_CP { asprintf(&$$ "(+ %s %s)" $3 $4); } |
-;;     OP_OP OP_MINUS EXP EXP OP_CP { asprintf(&$$ "(- %s %s)" $3 $4); } |
-;;     OP_OP OP_MULT EXP EXP OP_CP { asprintf(&$$ "(* %s %s)" $3 $4); } |
-;;     OP_OP OP_DIV EXP EXP OP_CP { asprintf(&$$ "(/ %s %s)" $3 $4); } |
-;;     OP_OP KW_IF EXPB EXP EXP OP_CP { asprintf(&$$ "(if %s %s %s)" $3 $4 $5); } |
-;;     OP_OP KW_IF EXPB EXP OP_CP { asprintf(&$$ "(if %s %s)" $3 $4); } |
-;;     OP_OP KW_FOR OP_OP IDENTIFIER EXP EXP OP_CP EXPLIST OP_CP { asprintf(&$$ "(for (%s %s %s) %s)" $4 $5 $6 $8); } |
-;;     OP_OP KW_WHILE EXPB EXP OP_CP { asprintf(&$$ "(while %s %s)" $3 $4); } |
-;;     OP_OP KW_PRINT EXP OP_CP { asprintf(&$$ "(print %s)" $3); } |
-;;     OP_OP KW_EXIT OP_CP { asprintf(&$$ "(exit)"); exit(0); } |
-;;     OP_OP KW_DEFFUN IDENTIFIER OP_OP PARAMLIST OP_CP EXPLIST OP_CP { asprintf(&$$ "(deffun %s (%s) %s)" $3 $5 $7); } |
-;;     EXPB { $$ = $1; } |
-;;     LIST_INPUT { $$ = $1; } |
-;;     SET { $$ = $1; } |
-;;     OP_OP KW_DEFVAR IDENTIFIER EXP OP_CP { asprintf(&$$ "(defvar %s %s)" $3 $4); } |
-;;     FCALL { $$ = $1; } |
-;;     OP_OP KW_LOAD OP_QUOTE IDENTIFIER OP_QUOTE OP_CP { asprintf(&$$ "(load \"%s\")" $4); } |
-;;     COMMENT { $$ = ""; } |
-;;     VALUEF { $$ = $1; } |
-;;     VALUEI { $$ = $1; };
-
-;; LIST_INPUT:
-;;     OP_OP KW_APPEND LIST_INPUT LIST_INPUT OP_CP { asprintf(&$$ "(append %s %s)" $3 $4); } |
-;;     OP_OP KW_CONCAT LIST_INPUT LIST_INPUT OP_CP { asprintf(&$$ "(concat %s %s)" $3 $4); } |
-;;     LIST { $$ = $1; };
-
-;; SET:
-;;     OP_OP KW_SET IDENTIFIER EXP OP_CP { asprintf(&$$ "(set %s %s)" $3 $4); };
-
-;; LIST:
-;;     OP_OP KW_LIST VALUES OP_CP { asprintf(&$$ "(list %s)" $3); } |
-;;     OP_APOSTROPHE OP_OP OP_CP { asprintf(&$$ "\'()"); } |
-;;     KW_NIL { asprintf(&$$ "nil"); } |
-;;     OP_APOSTROPHE OP_OP VALUES OP_CP { asprintf(&$$ "\'(%s)" $3); };
-
-;; VALUES:
-;;     VALUEI { $$ = $1; } |
-;;     VALUEF { $$ = $1; } |
-;;     IDENTIFIER { $$ = $1; } |
-;;     VALUES OP_COMMA VALUEF { asprintf(&$$ "%s %s" $1 $3); } |
-;;     VALUES OP_COMMA VALUEI { asprintf(&$$ "%s %s" $1 $3); } |
-;;     VALUES OP_COMMA IDENTIFIER { asprintf(&$$ "%s %s" $1 $3); };
-
-;; FCALL:
-;;     OP_OP IDENTIFIER PARAMLIST OP_CP { 
-;;         if (strcmp($3 "") == 0)
-;;             asprintf(&$$ "(%s)" $2);
-;;         else
-;;             asprintf(&$$ "(%s%s)" $2 $3);
-        
-;;     };
-
-;; PARAMLIST:
-;;     /* empty */ { $$ = ""; } |
-;;     PARAMLIST EXP { asprintf(&$$ "%s %s" $1 $2); };
-
-;; EXPB:
-;;     OP_OP KW_AND EXPB EXPB OP_CP { asprintf(&$$ "(and %s %s)" $3 $4); } |
-;;     OP_OP KW_OR EXPB EXPB OP_CP { asprintf(&$$ "(or %s %s)" $3 $4); } |
-;;     OP_OP KW_NOT EXPB OP_CP { asprintf(&$$ "(not %s)" $3); } |
-;;     OP_OP KW_LESS EXP EXP OP_CP { asprintf(&$$ "(< %s %s)" $3 $4); } |
-;;     OP_OP KW_EQUAL EXP EXP OP_CP { asprintf(&$$ "(= %s %s)" $3 $4); } |
-;;     KW_TRUE { asprintf(&$$ "true"); } |
-;;     KW_FALSE { asprintf(&$$ "false"); } |
-;;     IDENTIFIER { $$ = $1; };
-
-
 (setf keyword-list-and-value '(
     ("and" "KW_AND") ("or" "KW_OR") ("not" "KW_NOT") ("equal" "KW_EQUAL")
     ("less" "KW_LESS") ("nil" "KW_NIL") ("list" "KW_LIST") ("append" "KW_APPEND")
@@ -120,34 +14,9 @@
     ("\"" "OP_QUOTE")
 ))
 
-(defvar *terminal-list* '(
-    "KW_AND" "KW_OR" "KW_NOT" "KW_EQUAL" "KW_LESS" "KW_NIL" "KW_LIST" "KW_APPEND"
-    "KW_CONCAT" "KW_SET" "KW_DEFFUN" "KW_FOR" "KW_IF" "KW_EXIT" "KW_LOAD" "KW_PRINT"
-    "KW_TRUE" "KW_FALSE" "KW_DEFVAR" "KW_WHILE" "OP_PLUS" "OP_MINUS" "OP_DIV" "OP_MULT"
-    "OP_OP" "OP_CP" "OP_COMMA" "OP_APOSTROPHE" "OP_QUOTE" "COMMENT" "VALUEF" "VALUEI"
-    "IDENTIFIER" "KW_PRINT" 
-))
-
-(setf *non-terminal-list* '(
-    "START" "INPUT" "EXPLIST" "EXP" "EXPB" "LIST_INPUT" "SET" "LIST" "VALUES" "FCALL" "PARAMLIST"
-))
-
-(defun is-terminal (symbol)
-    ;; Check if the symbol is a terminal
-    (if (member symbol *terminal-list*)
-        t
-        nil))
-
-(defun is-non-terminal (symbol)
-    ;; Check if the symbol is a non-terminal
-    (if (member symbol *non-terminal-list*)
-        t
-        nil))
-
 (defun parse-aritmetic (tokens operator)
     ;; Parse the add operation and return the result
     ;; OP_OP OP_PLUS EXP EXP OP_CP
-
 
     (let ((first-token (car tokens)))
         (if (and (string= first-token "OP_OP") (string= (car (cdr tokens)) operator))
@@ -162,17 +31,10 @@
                                 (cdr next-tokens)
                                 t
                             )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )    
-    )
-)
+                            nil )
+                        nil )
+                    nil ))
+            nil )))
 
 (defun parse-if-else (tokens)
     ;; Parse the if operation and return the result
@@ -183,27 +45,17 @@
             (let* ((expb (parse-expb (cddr tokens)))
                   (exp1 (parse-exp expb))
                   (exp2 (parse-exp exp1))
-                  (next-tokens exp2)
-                )
+                  (next-tokens exp2))
                 (if (and (not (null expb)) (not (null exp1)) (not (null exp2)))
                     (if (listp next-tokens)
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )    
-    )
-
-)
+                                t)
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 
 (defun parse-if (tokens)
@@ -214,26 +66,17 @@
         (if (and (string= first-token "OP_OP") (string= (car (cdr tokens)) "KW_IF"))
             (let* ((expb (parse-expb (cddr tokens)))
                   (exp1 (parse-exp expb))
-                  (next-tokens exp1)
-                )
+                  (next-tokens exp1))
                 (if (and (not (null expb)) (not (null exp1)))
                     (if (listp next-tokens)
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )    
-    )
-)
+                                t)
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-values (tokens value-type)
     ;; Parse the values and return the result
@@ -242,12 +85,8 @@
         (if (string= first-token value-type)
             (if (cdr tokens)
                 (cdr tokens)
-                t
-            )
-            nil
-        )
-    )
-)
+                t)
+            nil)))
 
 
 (defun parse-set-defvar (tokens operation)
@@ -260,26 +99,17 @@
         (if (and (string= first-token "OP_OP") (string= second-token operation))
             (let* ((identifier (parse-values (cddr tokens) "IDENTIFIER"))
                   (exp1 (parse-exp identifier))
-                  (next-tokens exp1)
-                )
+                  (next-tokens exp1))
                 (if (and (not (null identifier)) (not (null exp1)))
                     (if (listp next-tokens)
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-)
+                                t)
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-boolean (tokens value-type)
     ;; Parse the boolean values and return the result
@@ -298,22 +128,12 @@
                             (if (and (string= (car next-tokens) "OP_CP"))
                                 (if (cdr next-tokens)
                                     (cdr next-tokens)
-                                    t
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                nil
-            )
-            nil
-        )
-    )
-
-)
+                                    t)
+                                nil)
+                            nil)
+                        nil))
+                nil)
+            nil)))
 
 (defun parse-not (tokens)
     ;; Parse the not operation and return the result
@@ -324,33 +144,20 @@
         (if (string= first-token "OP_OP")
             (if (string= (car (cdr tokens)) "KW_NOT")
                 (let* ((expb (parse-expb (cddr tokens)))
-                      (next-tokens expb)
-                    )
+                      (next-tokens expb))
                     (if (not (null expb))
                         (if (listp next-tokens)
                             (if (and (string= (car next-tokens) "OP_CP"))
                                 (if (cdr next-tokens)
                                     (cdr next-tokens)
-                                    t
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                nil
-            )
-            nil
-        )
-    )
-
-
-)
+                                    t)
+                                nil)
+                            nil)
+                        nil))
+                nil)
+            nil)))
 
 (defun parse-expb (tokens)
-    ;; Parse the expb and return the result
     ;; Rules:
     ;; EXPB:
     ;;     OP_OP KW_AND EXPB EXPB OP_CP { asprintf(&$$ "(and %s %s)" $3 $4); } |
@@ -365,15 +172,13 @@
     (cond
         ((parse-boolean tokens "KW_AND") (parse-boolean tokens "KW_AND"))
         ((parse-boolean tokens "KW_OR") (parse-boolean tokens "KW_OR"))
-        ((parse-not tokens) (parse-not tokens)) ;; broken
+        ((parse-not tokens) (parse-not tokens))
         ((parse-aritmetic tokens "KW_LESS") (parse-aritmetic tokens "KW_LESS"))
         ((parse-aritmetic tokens "KW_EQUAL") (parse-aritmetic tokens "KW_EQUAL"))
         ((parse-values tokens "KW_TRUE") (parse-values tokens "KW_TRUE"))
         ((parse-values tokens "KW_FALSE") (parse-values tokens "KW_FALSE"))
         ((parse-values tokens "IDENTIFIER") (parse-values tokens "IDENTIFIER"))
-        (t nil)
-    )
-)
+        (t nil)))
 
 (defun parse-paramlist (tokens)
     ;; Parse the paramlist and return the result
@@ -388,14 +193,9 @@
             (if (listp parsed-exp)
                 (if (null parsed-exp)
                     t
-                    (parse-paramlist parsed-exp)
-                )
-                parsed-exp
-            )
-            tokens
-        )
-    )
-)
+                    (parse-paramlist parsed-exp))
+                parsed-exp)
+            tokens)))
 
 (defun parse-fcall (tokens)
     ;; Parse the fcall and return the result
@@ -412,23 +212,12 @@
                                 (if (and (string= (car next-tokens) "OP_CP"))
                                     (if (cdr next-tokens)
                                         (cdr next-tokens)
-                                        t
-                                    )
-                                    nil
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-
-)
+                                        t)
+                                    nil)
+                                nil)
+                            nil))
+                    nil))
+            nil)))
 
 (defun parse-value-in-list (tokens)
     ;; Parse the value in the list and return the result
@@ -444,8 +233,8 @@
     (let ((parse-value-valuei (parse-values tokens "VALUEI"))
             (parse-value-valuef (parse-values tokens "VALUEF"))
             (parse-value-identifier (parse-values tokens "IDENTIFIER")))
-        (if (or parse-value-valuei parse-value-valuef parse-value-identifier)
-            (let* (next-tokens (cdr tokens))
+        (if (or (not (null parse-value-valuei)) (not (null parse-value-valuef)) (not (null parse-value-identifier)))
+            (let ((next-tokens (cdr tokens)))
                 (if (not (null next-tokens))
                     (if (string= (car next-tokens) "OP_COMMA")
                         (if (cdr next-tokens)
@@ -456,29 +245,16 @@
                                     (if (listp (cdr next-tokens))
                                         (if (null (cdr next-tokens))
                                             t
-                                            (parse-value-in-list (cdr next-tokens))
-                                        )
-                                        nil
-                                    )
-                                    nil
-                                )
-                            )
-                            nil
-                        )
+                                            (parse-value-in-list (cdr next-tokens)))
+                                        nil)
+                                    nil))
+                            nil)
                         (if (listp next-tokens)
                             (if (null next-tokens)
                                 t
-                                next-tokens
-                            )
-                            t
-                        )
-                    )
-                    nil
-                )
-            )
-        )
-    )
-)
+                                next-tokens)
+                            t))
+                    t)))))
 
 (defun parse-apostrophe (tokens)
     ;; Parse the apostrophe and return the result
@@ -497,27 +273,16 @@
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
+                                t)
+                            nil)
+                        nil)
                     (let ((third-token (car (cdr next-tokens))))
                         (if (string= third-token "OP_CP")
                             (if (cdr (cdr next-tokens))
                                 (cdr (cdr next-tokens))
-                                t
-                            )
-                            nil
-                        )
-                    )
-                )
-            )
-            nil
-        )
-    )
-)
+                                t)
+                            nil))))
+            nil)))
 
 (defun parse-kw-list (tokens)
     ;; Parse the kw-list and return the result
@@ -528,27 +293,18 @@
     (let ((first-token (car tokens))
             (second-token (car (cdr tokens))))
         (if (and (string= first-token "OP_OP") (string= second-token "KW_LIST"))
-            (let* ((list-values (parse-paramlist (cddr tokens)))
+            (let* ((list-values (parse-value-in-list (cddr tokens)))
                   (next-tokens list-values))
                 (if (not (null list-values))
                     (if (listp next-tokens)
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-
-)
+                                t)
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-list (tokens)
     ;; Parse the list and return the result
@@ -559,16 +315,11 @@
     ;;     KW_NIL { asprintf(&$$ "nil"); } |
     ;;     OP_APOSTROPHE OP_OP VALUES OP_CP { asprintf(&$$ "\'(%s)" $3); };
 
-    (format t "token33s: ~a~%" tokens)
-
     (cond
         ((string= (car tokens) "KW_NIL" ) (cdr tokens))
         ((string= (car tokens) "OP_APOSTROPHE") (parse-apostrophe tokens))
         ((string= (car tokens) "OP_OP") (parse-kw-list tokens))
-        (t nil)
-    )
-
-)
+        (t nil)))
 
 (defun parse-list-input (tokens)
     ;; Parse the list input and return the result
@@ -578,7 +329,6 @@
     ;;     OP_OP KW_CONCAT LIST_INPUT LIST_INPUT OP_CP { asprintf(&$$ "(concat %s %s)" $3 $4); } |
     ;;     LIST { $$ = $1; };
 
-    (format t "tokens: ~a~%" tokens)
 
     (let ((first-token (car tokens)))
         (if (string= first-token "OP_OP")
@@ -593,24 +343,13 @@
                                 (if (and (string= (car next-tokens) "OP_CP"))
                                     (if (cdr next-tokens)
                                         (cdr next-tokens)
-                                        t
-                                    )
-                                    nil
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                (parse-list tokens)
-            )
-            (parse-list tokens)
-        )
-    )
-
-)
+                                        t)
+                                    nil)
+                                nil)
+                            nil)
+                        nil))
+                (parse-list tokens))
+            (parse-list tokens))))
 
 (defun parse-load (tokens)
     ;; Parse the load operation and return the result
@@ -630,24 +369,13 @@
                                 (if (string= (car (cdr next-tokens)) "OP_CP")
                                     (if (cdr (cdr next-tokens))
                                         (cdr (cdr next-tokens))
-                                        t
-                                    )
-                                    nil
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-
-)
+                                        t)
+                                    nil)
+                                nil)
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-while (tokens)
     ;; Parse the while operation and return the result
@@ -665,21 +393,12 @@
                             (if (and (string= (car next-tokens) "OP_CP"))
                                 (if (cdr next-tokens)
                                     (cdr next-tokens)
-                                    t
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                nil
-            )
-            nil
-        )
-    )
-)
+                                    t)
+                                nil)
+                            nil)
+                        nil))
+                nil)
+            nil)))
 
 (defun parse-for (tokens)
     ;; Parse the for operation and return the result
@@ -694,8 +413,7 @@
             (let* ((identifier (parse-values (cdr (cdr (cdr tokens))) "IDENTIFIER"))
                   (exp1 (parse-exp identifier))
                   (exp2 (parse-exp exp1))
-                  (next-tokens exp2)
-                )
+                  (next-tokens exp2))
                 (if (and (not (null identifier)) (not (null exp1)) (not (null exp2)))
                     (if (listp next-tokens)
                         (if (and (string= (car next-tokens) "OP_CP"))
@@ -706,26 +424,14 @@
                                         (if (and (string= (car left-tokens) "OP_CP"))
                                             (if (cdr left-tokens)
                                                 (cdr left-tokens)
-                                                t
-                                            )
-                                            nil
-                                        )
-                                        nil
-                                    )
-                                    nil
-                                )
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-)
+                                                t)
+                                            nil)
+                                        nil)
+                                    nil))
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-print (tokens)
     ;; Parse the print operation and return the result
@@ -735,28 +441,18 @@
         (if (string= first-token "OP_OP")
             (if (string= (car (cdr tokens)) "KW_PRINT")
                 (let* ((exp1 (parse-exp (cddr tokens)))
-                      (next-tokens exp1)
-                    )
+                      (next-tokens exp1))
                     (if (not (null exp1))
                         (if (listp next-tokens)
                             (if (and (string= (car next-tokens) "OP_CP"))
                                 (if (cdr next-tokens)
                                     (cdr next-tokens)
-                                    t
-                                )
-                                nil
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                nil
-            )
-            nil
-        )
-    )
-)
+                                    t)
+                                nil)
+                            nil)
+                        nil))
+                nil)
+            nil)))
 
 (defun parse-exit (tokens)
     ;; Parse the exit operation and return the result
@@ -770,19 +466,11 @@
                         (if (and (string= (car next-tokens) "OP_CP"))
                             (if (cdr next-tokens)
                                 (cdr next-tokens)
-                                t
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                )
-                nil
-            )
-            nil
-        )
-    )
-)
+                                t)
+                            nil)
+                        nil))
+                nil)
+            nil)))
 
 (defun parse-deffun (tokens)
     ;; Parse the deffun operation and return the result
@@ -808,33 +496,17 @@
                                                         (if (and (string= (car left-tokens) "OP_CP"))
                                                             (if (cdr left-tokens)
                                                                 (cdr left-tokens)
-                                                                t
-                                                            )
-                                                            nil
-                                                        )
-                                                        nil
-                                                    )
-                                                    nil
-                                                )
-                                            )
-                                            nil
-                                        )
-                                        nil
-                                    )
-                                    nil
-                                )
-                            )
-                            nil
-                        )
-                        nil
-                    )
-                    nil
-                )
-            )
-            nil
-        )
-    )
-)
+                                                                t)
+                                                            nil)
+                                                        nil)
+                                                    nil))
+                                            nil)
+                                        nil)
+                                    nil))
+                            nil)
+                        nil)
+                    nil))
+            nil)))
 
 (defun parse-comment (tokens)
     ;; Parse the comment and return the result
@@ -843,30 +515,12 @@
     (let ((first-token (car tokens)))
         (if (string= first-token "COMMENT")
             t
-            nil
-        )
-    )
-)
+            nil )))
 
 (defun parse-exp (tokens)
     ;; Parse the exp and return the result
     ;; Rules:
     ;; EXP:
-    ;;     OP_OP OP_PLUS EXP EXP OP_CP
-    ;;     OP_OP OP_MINUS EXP EXP OP_CP
-    ;;     OP_OP OP_MULT EXP EXP OP_CP
-    ;;     OP_OP OP_DIV EXP EXP OP_CP
-    ;;     OP_OP KW_IF EXPB EXP EXP OP_CP
-    ;;     OP_OP KW_IF EXPB EXP OP_CP
-    ;;     EXPB
-    ;;     LIST_INPUT
-    ;;     SET
-    ;;     OP_OP KW_DEFVAR IDENTIFIER EXP OP_CP
-    ;;     FCALL
-    ;;     OP_OP KW_LOAD OP_QUOTE IDENTIFIER OP_QUOTE OP_CP
-    ;;     COMMENT
-    ;;     VALUEF
-    ;;     VALUEI
 
     (cond
         ((parse-aritmetic tokens "OP_PLUS") (parse-aritmetic tokens "OP_PLUS"))
@@ -875,8 +529,8 @@
         ((parse-aritmetic tokens "OP_DIV") (parse-aritmetic tokens "OP_DIV"))
         ((parse-if tokens) (parse-if tokens))
         ((parse-if-else tokens) (parse-if-else tokens))
-        ((parse-while tokens) (parse-while tokens))
         ((parse-for tokens) (parse-for tokens))
+        ((parse-while tokens) (parse-while tokens))
         ((parse-print tokens) (parse-print tokens))
         ((parse-exit tokens) (parse-exit tokens))
         ((parse-deffun tokens) (parse-deffun tokens))
@@ -889,9 +543,7 @@
         ((parse-comment tokens) (parse-comment tokens))
         ((parse-values tokens "VALUEI") (parse-values tokens "VALUEI"))
         ((parse-values tokens "VALUEF") (parse-values tokens "VALUEF"))
-        (t nil)
-    )
-)
+        (t nil)))
 
 (defun parse-explist (tokens)
     ;; Parse the explist and return the result
@@ -900,17 +552,11 @@
     ;;     EXP
     ;;     EXPLIST EXP;
     
-    ;; Try to parse the EXP
-    ;; if not try to parse the EXPLIST EXP
-
 
     (let ((parsed-exp (parse-exp tokens)))
         (if parsed-exp
             (if (listp parsed-exp)
-                (if (null parsed-exp)
-                    t
-                    (parse-explist parsed-exp)
-                )
+                (parse-explist parsed-exp)
                 parsed-exp
             )
             tokens
@@ -923,27 +569,23 @@
     (let ((result (parse-explist tokens)))
         (if (or (null result) (listp result))
             (format t "Syntax error: Invalid input~%")
-            (format t "Syntax correct ~%")
-        )
-    )
-)
+            (format t "Syntax correct~%"))))
 
 (defun top-down-parser (tokens)
-    (parse-input tokens)
-)
+    (if (null tokens)
+        (format t "Syntax correct~%")
+        (parse-input tokens)))
 
 (defun is-letter (char)
     ;; Check if the character is a letter (a-zA-Z)
     (or (and (>= (char-code char) 65) (<= (char-code char) 90))
-        (and (>= (char-code char) 97) (<= (char-code char) 122)))
-)
+        (and (>= (char-code char) 97) (<= (char-code char) 122))))
 
 (defun is-white-space (char)
     ;; Check if the character is a whitespace (space tab newline)
     (or (char= char #\Space)
         (char= char #\Tab)
-        (char= char #\Newline))
-)
+        (char= char #\Newline)))
 
 (defun is-operator (char)
     ;; Check if the character is an operator (+ - / * ( ) ) , " 
@@ -954,7 +596,8 @@
         (= (char-code char) 40)  ; (
         (= (char-code char) 41)  ; )
         (= (char-code char) 44) ; ,
-        (= (char-code char) 34)) ; "
+        (= (char-code char) 34) ; "
+        (= (char-code char) 39)) ; '
 )
 
 (defun is-digit (char)
@@ -1131,19 +774,6 @@
                 list)))
         (dfa-helper line 0 nil))))
 
-(defun print-test-list (list)
-    ;; Print the list of tokens Recursively
-    (if list
-        (progn
-            (let ((token (car list)))
-                (format t "token: ~a value: ~a~%" (car token) (cadr token))
-            )
-            (print-test-list (cdr list))
-        )
-    )
-
-)
-
 (defun repl-process ()
     ;; read eval print loop for lexer
     (format t "> ")
@@ -1153,7 +783,6 @@
                 (format t "Exiting the interpreter~%")
                 (progn
                     (top-down-parser (dfa line))
-                    ;(print-test-list (dfa line))
                     (repl-process))))))
 
 (defun load-file (file-name)
@@ -1185,15 +814,17 @@
             (format t "Invalid number of arguments~%"))))
 
 
-;; (let* ((param-list-test '("VALUEI" "VALUEF" "VALUEI"))
-;;         (explist-test '("OP_OP" "KW_PRINT" "IDENTIFIER" "OP_CP" "OP_CP"))
-;;         (deffun-test '("OP_OP" "KW_DEFFUN" "IDENTIFIER" "OP_OP" "VALUEI" "OP_CP" "OP_OP" "KW_PRINT" "IDENTIFIER" "OP_CP" "OP_CP"))
-;;         (fcall-test '("OP_OP" "IDENTIFIER" "OP_CP"))    
-;;     )
-;;     ;; (format t "~a~%" (parse-paramlist param-list-test))
-;;     ;; (format t "~a~%" (parse-explist explist-test))
-;;     ;;(format t "~a~%" (parse-deffun deffun-test))
-;;     (format t "~a~%" (parse-fcall fcall-test))
-;; )
+;;(let* ((param-list-test '("VALUEI" "VALUEF" "VALUEI"))
+;;        (explist-test '("OP_OP" "KW_PRINT" "IDENTIFIER" "OP_CP" "OP_CP"))
+;;        (deffun-test '("OP_OP" "KW_DEFFUN" "IDENTIFIER" "OP_OP" "VALUEI" "OP_CP" "OP_OP" "KW_PRINT" "IDENTIFIER" "OP_CP" "OP_CP"))
+;;        (fcall-test '("OP_OP" "IDENTIFIER" "OP_CP"))    
+;;    )
+;;    ;; (format t "~a~%" (parse-paramlist param-list-test))
+;;    ;; (format t "~a~%" (parse-explist explist-test))
+;;    ;;(format t "~a~%" (parse-deffun deffun-test))
+;;    ;;(format t "~a~%" (parse-fcall fcall-test))
+;;    (format t "~a~%" (parse-value-in-list '("VALUEI" "OP_COMMA" "VALUEF" "OP_COMMA" "IDENTIFIER")))
+;;    (format t "~a~%" (parse-value-in-list '("VALUEI" "OP_COMMA" "VALUEF" "OP_COMMA" "IDENTIFIER" "IDENTIFIER")))
+;;)
 
 (gppinterpreter)
