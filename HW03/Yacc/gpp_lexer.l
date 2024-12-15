@@ -1,6 +1,5 @@
 
 %{
-    /* Definitions */
     #include <stdio.h>
     #include <string.h>
     #include <stdbool.h>
@@ -10,15 +9,12 @@
     float custom_atof(char *input);
 %}
 
-/* Comment Delimeter is ';;' */
 COMMENT ";;".*
-/* unsigned integers or unsigned fractions with : or f  in between 2:3 or 2: or :3 */
 VALUEI [0-9]+
 VALUEF {VALUEI}[:f]{VALUEI}|{VALUEI}[:f]|[:]{VALUEI}
-/* identifier: Any combination of alphabetical characters, digits and “_” with only leading alphabetical characters. */
 IDENTIFIER  [a-zA-Z][a-zA-Z0-9_]*
+STRING  \"[^\"]*\"
 
-/* Invalid characters for identifier */
 INVALID_CHAR [^a-zA-Z0-9_() \t\n\r\b\f\v;,]
 INVALID_NUMBER [^0-9() \t\n\r\b\f\v;,]
 
@@ -49,7 +45,6 @@ while    { return KW_WHILE; }
 
     /* COMMENT VALUEs IDENTIFER */
 
-
 "+"             {return OP_PLUS;}
 "-"             {return OP_MINUS;}
 "/"             {return OP_DIV;}
@@ -58,10 +53,8 @@ while    { return KW_WHILE; }
 ")"             {return OP_CP;}
 ","             {return OP_COMMA;}
 "'"             {return OP_APOSTROPHE;}
-"\""            {return OP_QUOTE;}
 
     /* COMMENT VALUEs IDENTIFER */
-
 
 {COMMENT}       { return COMMENT; }
 {VALUEF}        { 
@@ -77,6 +70,8 @@ while    { return KW_WHILE; }
                     return VALUEI;
                 }
 {IDENTIFIER}    {yylval.sval = strdup(yytext); return IDENTIFIER;}
+
+{STRING}        {yylval.sval = strdup(yytext); return STRING;}
 
     /* WHITESPACE */
 
@@ -100,32 +95,30 @@ int yywrap(){
 
 float custom_atof(char *input){
     if (strchr(input, ':') != NULL){
-        char *first_part = strtok(input, ":");  // 'f' karakterinden önceki kısım
-        char *second_part = strtok(NULL, ":");  // 'f' karakterinden sonraki kısım
+        char *first_part = strtok(input, ":");
+        char *second_part = strtok(NULL, ":");
         
         if (first_part && second_part) {
-            // İki kısmı da birleştirip float'a dönüştür
             char combined[256];
             snprintf(combined, sizeof(combined), "%s.%s", first_part, second_part);
-            return atof(combined);  // String'i float'a çevir
+            return atof(combined);
         } else {
-            return atof(first_part);  // Eğer tek bir kısım varsa onu dönüştür
+            return atof(first_part);
         }
     }
     else if (strchr(input, 'f') != NULL){
-        char *first_part = strtok(input, "f");  // 'f' karakterinden önceki kısım
-        char *second_part = strtok(NULL, "f");  // 'f' karakterinden sonraki kısım
-        
+        char *first_part = strtok(input, "f");
+        char *second_part = strtok(NULL, "f");
+
         if (first_part && second_part) {
-            // İki kısmı da birleştirip float'a dönüştür
             char combined[256];
             snprintf(combined, sizeof(combined), "%s.%s", first_part, second_part);
-            return atof(combined);  // String'i float'a çevir
+            return atof(combined);
         } else {
-            return atof(first_part);  // Eğer tek bir kısım varsa onu dönüştür
+            return atof(first_part);
         }
     }
-    else{
+    else {
         return atof(input);
     }
 }
