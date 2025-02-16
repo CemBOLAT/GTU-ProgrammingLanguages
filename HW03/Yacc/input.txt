@@ -1,37 +1,24 @@
-;; helloworld.g++
-(deffun sumup (x) (if (equal x 0) 1 (+ x (sumup (- x 1)))))
-(deffun my_function(a b) (if (equal a 0) (print true) (and (print false) (or (less b a) (set a (+ a 1))))))
-(deffun my_function() (if (equal a 0) (print true) (and (print false) (or (less b a) (set a (+ a 1))))))
-(deffun my_function() (if (equal a 0) (print true) (and (print false) (or (less b a) (set a (+ a 1))))))
-(set my_list (list 1,2,321))
-(print (append my_list (list 456)))
-(print (concat my_list (list 5:2, 6f2)))
-(set valueI 123f597)
-(set valueF 123f456)
-(print valueI)
-(print valueF)
-(if (equal my_list nil) (print x))
-(deffun factorial (n) (if (equal nf1 0f) 1 (* n (factorial (- n 1)))))
-(for (x (+ 2 2) (+ 2 4)) (print x) (print x) (if (and false true) (load "cemal") (append (list 2,3) '(6,7))))
-(if (equal x 0) (set y 1))
-(for (x 0 5) (set y (+ x 1)))
-(if (less x 0) (if (less x 10) (set y (+ x 5)) (set y (- x 3))) (set y 0))
-'(1 , 4 , 5)
-(sumup 4 5)
-(sumup (+ 4 5))
-(myfunction (+ 3 5) (* 2 4) (if (less x 0) (+ x 1) (- x 1)))
-(deffun factorial (n) (if (equal n 0) 1 (* n 5)))
-(if (equal x 0) 1)
-(print (+ 3 5))
-(print HelloWorld)
-(load "my_functions")
-(while (and x 0) (set x (- x 1)))
-(quit)
-(concat '(1, 2, 3) nil)
-(concat '(1, 2, 3) '())
-(concat '(1, 2, 3) '(4, 5))
-(list 1, 2, 3)
-(for (x (+ 2 5) (- (and true false) 4)) (while (less x 5) (print x)))
-(print (append (list 1, 2, 3) (list 4, 5)))
-(print (concat '(1, 2, 3) nil))
-(set my_list (list 1,2,321))
+;; Test Program
+;; Variable declarations
+(defvar x 5)
+(defvar y 10)
+(defvar z 0)
+
+;; Operations to set variable values
+(set x (+ x y))
+(set y (- y 2))
+(set z (* x y))
+(set x (/ z y))
+
+;; Function definition
+(deffun sum_two (a b) (+ a b))
+
+;; Function call
+(defvar result (sum_two x y))
+
+;; Conditional statement
+(if (less result 20) (print "Result is greater than 20") (print "Result is 20 or less"))
+
+;; Loop example
+(for (i 1 5) (print i))
+
